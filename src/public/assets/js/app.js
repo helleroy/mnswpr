@@ -9,7 +9,6 @@ var App = React.createClass({displayName: "App",
 });
 
 React.render(React.createElement(App, null), document.body);
-
 },{"./components/board/Board":158,"react":157}],2:[function(require,module,exports){
 // shim for using process in browser
 
