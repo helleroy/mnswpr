@@ -1,0 +1,24 @@
+{
+  "name": "reactgame",
+  "version": "1.0.0",
+  "description": "Some kind of game made with React",
+  "main": "app.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "author": "helleroy <helleroy@gmail.com>",
+  "license": "ISC",
+  "dependencies": {
+    "react": "^0.13.3",
+    "express": "^4.12.4",
+    "immutable": "^3.7.3"
+  },
+  "devDependencies": {
+    "gulp": "^3.8.11",
+    "vinyl-source-stream": "^1.1.0",
+    "browserify": "^10.2.1",
+    "reactify": "^1.1.1",
+    "watchify": "^3.2.1",
+    "gulp-notify": "^2.2.0"
+  }
+}
