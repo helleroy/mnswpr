@@ -1,3 +1,4 @@
 node_modules/
 .idea/
 src/public/assets/js/app.js
+src/public/assets/css/main.css

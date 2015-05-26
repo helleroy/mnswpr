@@ -20,6 +20,10 @@
     "browserify": "^10.2.1",
     "reactify": "^1.1.1",
     "watchify": "^3.2.1",
-    "gulp-notify": "^2.2.0"
+    "gulp-notify": "^2.2.0",
+    "gulp-plumber": "~1.0.1",
+    "gulp-less": "~3.0.3",
+    "gulp-util": "~3.0.4",
+    "gulp-uglify": "~1.2.0"
   }
 }

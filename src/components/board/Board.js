@@ -17,7 +17,7 @@ module.exports = React.createClass({
         return {tiles: generateTiles(this.props.board.rows, this.props.board.cols, this.props.board.mines)};
     },
     render: function () {
-        return <table>
+        return <table className="board">
             {this.state.tiles.map(function (row) {
                 return <tr>
                     {row.map(function (tile) {
@@ -34,7 +34,7 @@ function generateTiles(rows, cols, numberOfMines) {
     var mines = generateMineIndicies(numberOfMines, numberOfTiles);
     var tiles = [];
 
-    for (var i = 0; i < length; i++) {
+    for (var i = 0; i < numberOfTiles; i++) {
         tiles.push({hasMine: _.includes(mines, i)});
     }
 
