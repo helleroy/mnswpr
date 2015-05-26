@@ -32075,14 +32075,14 @@ module.exports = React.createClass({displayName: "exports",
         return {board: boards.intermediate}
     },
     getInitialState: function () {
-        return {tiles: generateBoard(this.props.board.rows, this.props.board.cols, this.props.board.mines)};
+        return {tiles: generateTiles(this.props.board.rows, this.props.board.cols, this.props.board.mines)};
     },
     render: function () {
         return React.createElement("table", null, 
             this.state.tiles.map(function (row) {
                 return React.createElement("tr", null, 
                     row.map(function (tile) {
-                        return React.createElement("td", null, tile);
+                        return React.createElement("td", null, React.createElement(Tile, {hasMine: tile.hasMine, neighborMineCount: tile.neighborMineCount}));
                     })
                 );
             })
@@ -32090,23 +32090,52 @@ module.exports = React.createClass({displayName: "exports",
     }
 });
 
-function generateBoard(rows, cols, numberOfMines) {
-    var length = rows * cols;
-    var mines = [];
+function generateTiles(rows, cols, numberOfMines) {
+    var numberOfTiles = rows * cols;
+    var mines = generateMineIndicies(numberOfMines, numberOfTiles);
     var tiles = [];
 
+    for (var i = 0; i < length; i++) {
+        tiles.push({hasMine: _.includes(mines, i)});
+    }
+
+    tiles = tiles.map(function (tile, index) {
+        return _.assign(tile, {neighborMineCount: countNeighboringMines(tiles, cols, index)})
+    });
+
+    return _.chunk(tiles, cols);
+}
+
+function generateMineIndicies(numberOfMines, numberOfTiles) {
+    var mines = [];
     while (mines.length < numberOfMines) {
-        var random = _.random(0, length - 1);
+        var random = _.random(0, numberOfTiles - 1);
         if (!_.includes(mines, random)) {
             mines.push(random);
         }
     }
+    return mines;
+}
 
-    for (var i = 0; i < length; i++) {
-        tiles.push(React.createElement(Tile, {hasMine: _.includes(mines, i)}));
-    }
+function countNeighboringMines(tiles, cols, index) {
+    var topLeft = tiles[index - cols - 1];
+    var top = tiles[index - cols];
+    var topRight = tiles[index - cols + 1];
+    var right = tiles[index + 1];
+    var bottomRight = tiles[index + cols + 1];
+    var bottom = tiles[index + cols];
+    var bottomLeft = tiles[index + cols - 1];
+    var left = tiles[index - 1];
 
-    return _.chunk(tiles, cols);
+    var neighbors = [topLeft, top, topRight, right, bottomRight, bottom, bottomLeft, left];
+
+    var count = 0;
+    neighbors.forEach(function (neighbor) {
+        if (neighbor !== undefined && neighbor.hasMine) {
+            count++;
+        }
+    });
+    return count;
 }
 },{"../tile/Tile":160,"lodash":3,"react":158}],160:[function(require,module,exports){
 var React = require('react');
@@ -32135,7 +32164,8 @@ module.exports = React.createClass({displayName: "exports",
     render: function () {
         return (
             React.createElement("div", {onClick: this.onClick}, 
-                this.state.revealed ? this.props.hasMine ? React.createElement("div", null, "[B]") : React.createElement("div", null, "[ ]") :
+                this.state.revealed ? this.props.hasMine ? React.createElement("div", null, "[B]") :
+                    React.createElement("div", null, "[", this.props.neighborMineCount, "]") :
                     this.state.flagged ? React.createElement("div", null, "[?]") : React.createElement("div", null, "[X]")
             )
         );

@@ -24,7 +24,8 @@ module.exports = React.createClass({
     render: function () {
         return (
             <div onClick={this.onClick}>
-                {this.state.revealed ? this.props.hasMine ? <div>[B]</div> : <div>[ ]</div> :
+                {this.state.revealed ? this.props.hasMine ? <div>[B]</div> :
+                    <div>[{this.props.neighborMineCount}]</div> :
                     this.state.flagged ? <div>[?]</div> : <div>[X]</div>}
             </div>
         );

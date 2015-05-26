@@ -14,14 +14,14 @@ module.exports = React.createClass({
         return {board: boards.intermediate}
     },
     getInitialState: function () {
-        return {tiles: generateBoard(this.props.board.rows, this.props.board.cols, this.props.board.mines)};
+        return {tiles: generateTiles(this.props.board.rows, this.props.board.cols, this.props.board.mines)};
     },
     render: function () {
         return <table>
             {this.state.tiles.map(function (row) {
                 return <tr>
                     {row.map(function (tile) {
-                        return <td>{tile}</td>;
+                        return <td><Tile hasMine={tile.hasMine} neighborMineCount={tile.neighborMineCount}/></td>;
                     })}
                 </tr>;
             })}
@@ -29,21 +29,50 @@ module.exports = React.createClass({
     }
 });
 
-function generateBoard(rows, cols, numberOfMines) {
-    var length = rows * cols;
-    var mines = [];
+function generateTiles(rows, cols, numberOfMines) {
+    var numberOfTiles = rows * cols;
+    var mines = generateMineIndicies(numberOfMines, numberOfTiles);
     var tiles = [];
 
+    for (var i = 0; i < length; i++) {
+        tiles.push({hasMine: _.includes(mines, i)});
+    }
+
+    tiles = tiles.map(function (tile, index) {
+        return _.assign(tile, {neighborMineCount: countNeighboringMines(tiles, cols, index)})
+    });
+
+    return _.chunk(tiles, cols);
+}
+
+function generateMineIndicies(numberOfMines, numberOfTiles) {
+    var mines = [];
     while (mines.length < numberOfMines) {
-        var random = _.random(0, length - 1);
+        var random = _.random(0, numberOfTiles - 1);
         if (!_.includes(mines, random)) {
             mines.push(random);
         }
     }
+    return mines;
+}
 
-    for (var i = 0; i < length; i++) {
-        tiles.push(<Tile hasMine={_.includes(mines, i)}/>);
-    }
+function countNeighboringMines(tiles, cols, index) {
+    var topLeft = tiles[index - cols - 1];
+    var top = tiles[index - cols];
+    var topRight = tiles[index - cols + 1];
+    var right = tiles[index + 1];
+    var bottomRight = tiles[index + cols + 1];
+    var bottom = tiles[index + cols];
+    var bottomLeft = tiles[index + cols - 1];
+    var left = tiles[index - 1];
 
-    return _.chunk(tiles, cols);
+    var neighbors = [topLeft, top, topRight, right, bottomRight, bottom, bottomLeft, left];
+
+    var count = 0;
+    neighbors.forEach(function (neighbor) {
+        if (neighbor !== undefined && neighbor.hasMine) {
+            count++;
+        }
+    });
+    return count;
 }
