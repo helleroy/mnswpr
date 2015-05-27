@@ -4,7 +4,7 @@ var _ = require('lodash');
 var Tile = require('../tile/Tile');
 
 var boards = {
-    easy: {cols: 8, rows: 8, mines: 8},
+    easy: {cols: 8, rows: 8, mines: 10},
     intermediate: {cols: 16, rows: 16, mines: 40},
     hard: {cols: 32, rows: 16, mines: 99}
 };
@@ -17,14 +17,13 @@ module.exports = React.createClass({
         return {tiles: generateTiles(this.props.board.rows, this.props.board.cols, this.props.board.mines)};
     },
     reveal: function (index) {
-        this.updateTile(index, {revealed: true});
+        var tiles = this.state.tiles.slice(0);
+        revealTile(index, tiles, this.props.board.cols);
+        this.setState({tiles: tiles});
     },
     flag: function (index) {
-        this.updateTile(index, {flagged: true});
-    },
-    updateTile: function (index, newState) {
         var tiles = this.state.tiles.slice(0);
-        tiles[index] = _.assign(tiles[index], newState);
+        tiles[index].flagged = true;
         this.setState({tiles: tiles})
     },
     render: function () {
@@ -46,6 +45,21 @@ module.exports = React.createClass({
         </table>;
     }
 });
+
+function revealTile(index, tiles, cols) {
+    if (tiles[index].revealed || tiles[index].adjacentMineCount !== 0) {
+        tiles[index].revealed = true;
+        return;
+    }
+
+    tiles[index].revealed = true;
+
+    getAdjacentTiles(tiles, cols, index).forEach(function (tile) {
+        if (tile.key !== undefined) {
+            revealTile(tile.key, tiles, cols);
+        }
+    });
+}
 
 function generateTiles(rows, cols, numberOfMines) {
     var numberOfTiles = rows * cols;
@@ -77,14 +91,17 @@ function generateMineIndicies(numberOfMines, numberOfTiles) {
 }
 
 function getAdjacentTiles(tiles, cols, index) {
-    var topLeft = tiles[index - cols - 1] || {};
+    var leftEdge = index % cols === 0;
+    var rightEdge = index % cols === cols - 1;
+
+    var topLeft = leftEdge ? {} : tiles[index - cols - 1] || {};
+    var left = leftEdge ? {} : tiles[index - 1] || {};
+    var bottomLeft = leftEdge ? {} : tiles[index + cols - 1] || {};
+    var topRight = rightEdge ? {} : tiles[index - cols + 1] || {};
+    var right = rightEdge ? {} : tiles[index + 1] || {};
+    var bottomRight = rightEdge ? {} : tiles[index + cols + 1] || {};
     var top = tiles[index - cols] || {};
-    var topRight = tiles[index - cols + 1] || {};
-    var right = tiles[index + 1] || {};
-    var bottomRight = tiles[index + cols + 1] || {};
     var bottom = tiles[index + cols] || {};
-    var bottomLeft = tiles[index + cols - 1] || {};
-    var left = tiles[index - 1] || {};
 
     return [topLeft, top, topRight, right, bottomRight, bottom, bottomLeft, left];
 }
