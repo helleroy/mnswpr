@@ -2,12 +2,8 @@
 
 var express = require('express');
 
-var app = express();
+var app = express().use(express.static('src/public'));
 
-app.set('port', process.env.PORT || 4000);
-
-app.use(express.static('src/public'));
-
-app.listen(app.get('port'), function () {
-    console.log('Started server on ', app.get('port'))
+var server = app.listen(process.env.PORT || 4000, function () {
+    console.log('Started server on http://%s:%s', server.address().address, server.address().port);
 });
