@@ -21,11 +21,12 @@ module.exports = React.createClass({
                 className += ' neighborcount' + this.props.adjacentMineCount;
             }
         }
+        var content = this.props.revealed ?
+            this.props.hasMine ? 'B' : this.props.adjacentMineCount === 0 ? '' : this.props.adjacentMineCount :
+            this.props.flagged ? '?' : '';
         return (
             <div className={className} onClick={this.onClick}>
-                {this.props.revealed ? this.props.hasMine ? <div>[B]</div> :
-                    <div>[{this.props.adjacentMineCount}]</div> :
-                    this.props.flagged ? <div>[?]</div> : <div>[X]</div>}
+                {content}
             </div>
         );
     }
