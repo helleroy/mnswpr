@@ -46,13 +46,11 @@ gulp.task('style', function () {
 gulp.task('script-watch', function () {
     var bundler = watchify(createBrowserify())
         .on('update', function () {
-            bundle();
+            rebundle();
         });
 
-    bundle();
-
-    function bundle() {
-        gutil.log('Compiling scripts...');
+    function rebundle() {
+        gutil.log('Recompiling scripts...');
         bundler
             .bundle()
             .on('error', handleErrors)
@@ -66,7 +64,7 @@ gulp.task('watch', ['script-watch'], function () {
     gulp.watch('src/less/*.less', ['style']);
 });
 
-gulp.task('build', ['script', 'style']);
+gulp.task('build', ['script-build', 'style']);
 
-gulp.task('default', ['watch']);
+gulp.task('default', ['build', 'watch']);
 
