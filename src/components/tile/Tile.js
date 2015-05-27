@@ -1,29 +1,19 @@
 var React = require('react');
 
 module.exports = React.createClass({
-    getInitialState: function () {
-        return {
-            revealed: false,
-            flagged: false
-        };
-    },
     onClick: function (event) {
-        if (this.state.revealed) {
+        if (this.props.revealed) {
             return;
         }
-
         if (event.ctrlKey) {
-            this.setState({flagged: !this.state.flagged})
-        } else if (!this.state.flagged) {
-            this.reveal();
+            this.props.flag(this.props.index);
+        } else if (!this.props.flagged) {
+            this.props.reveal(this.props.index);
         }
-    },
-    reveal: function () {
-        this.setState({revealed: true})
     },
     render: function () {
         var className = 'tile';
-        if (this.state.revealed) {
+        if (this.props.revealed) {
             className += ' revealed';
             if (this.props.hasMine) {
                 className += ' mine';
@@ -33,9 +23,9 @@ module.exports = React.createClass({
         }
         return (
             <div className={className} onClick={this.onClick}>
-                {this.state.revealed ? this.props.hasMine ? <div>[B]</div> :
+                {this.props.revealed ? this.props.hasMine ? <div>[B]</div> :
                     <div>[{this.props.adjacentMineCount}]</div> :
-                    this.state.flagged ? <div>[?]</div> : <div>[X]</div>}
+                    this.props.flagged ? <div>[?]</div> : <div>[X]</div>}
             </div>
         );
     }

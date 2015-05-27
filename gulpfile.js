@@ -40,7 +40,7 @@ gulp.task('style', function () {
     gulp.src('./src/less/main.less')
         .pipe(plumber())
         .pipe(less({paths: ['./src/less']}))
-        .pipe(gulp.dest('src/public/assets/css/'))
+        .pipe(gulp.dest('./src/public/assets/css/'))
 });
 
 gulp.task('script-watch', function () {
@@ -61,7 +61,9 @@ gulp.task('script-watch', function () {
 
 gulp.task('watch', ['script-watch'], function () {
     gutil.log('Watching for changes...');
-    gulp.watch('src/less/*.less', ['style']);
+    gulp.watch('./src/less/*.less', ['style']);
+    gulp.watch('./src/components/**/*.js', ['script-build']);
+    gulp.watch('./src/app.js', ['script-build']);
 });
 
 gulp.task('build', ['script-build', 'style']);

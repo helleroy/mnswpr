@@ -16,16 +16,33 @@ module.exports = React.createClass({
     getInitialState: function () {
         return {tiles: generateTiles(this.props.board.rows, this.props.board.cols, this.props.board.mines)};
     },
+    reveal: function (index) {
+        this.updateTile(index, {revealed: true});
+    },
+    flag: function (index) {
+        this.updateTile(index, {flagged: true});
+    },
+    updateTile: function (index, newState) {
+        var tiles = this.state.tiles.slice(0);
+        tiles[index] = _.assign(tiles[index], newState);
+        this.setState({tiles: tiles})
+    },
     render: function () {
         var tiles = _.chunk(this.state.tiles, this.props.board.cols);
         return <table className="board">
             {tiles.map(function (row) {
                 return <tr>
                     {row.map(function (tile) {
-                        return <td><Tile hasMine={tile.hasMine} adjacentMineCount={tile.adjacentMineCount}/></td>;
-                    })}
+                        return <td><Tile index={tile.key}
+                                         hasMine={tile.hasMine}
+                                         adjacentMineCount={tile.adjacentMineCount}
+                                         revealed={tile.revealed}
+                                         flagged={tile.flagged}
+                                         flag={this.flag}
+                                         reveal={this.reveal}/></td>;
+                    }.bind(this))}
                 </tr>;
-            })}
+            }.bind(this))}
         </table>;
     }
 });
@@ -36,11 +53,15 @@ function generateTiles(rows, cols, numberOfMines) {
     var tiles = [];
 
     for (var i = 0; i < numberOfTiles; i++) {
-        tiles.push({hasMine: _.includes(mines, i)});
+        tiles.push({key: i, hasMine: _.includes(mines, i)});
     }
 
     return tiles.map(function (tile, index) {
-        return _.assign(tile, {adjacentMineCount: countAdjacentMines(tiles, cols, index)})
+        return _.assign(tile, {
+            adjacentMineCount: countAdjacentMines(tiles, cols, index),
+            revealed: false,
+            flagged: false
+        })
     });
 }
 
