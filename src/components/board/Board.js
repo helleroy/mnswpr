@@ -17,11 +17,12 @@ module.exports = React.createClass({
         return {tiles: generateTiles(this.props.board.rows, this.props.board.cols, this.props.board.mines)};
     },
     render: function () {
+        var tiles = _.chunk(this.state.tiles, this.props.board.cols);
         return <table className="board">
-            {this.state.tiles.map(function (row) {
+            {tiles.map(function (row) {
                 return <tr>
                     {row.map(function (tile) {
-                        return <td><Tile hasMine={tile.hasMine} neighborMineCount={tile.neighborMineCount}/></td>;
+                        return <td><Tile hasMine={tile.hasMine} adjacentMineCount={tile.adjacentMineCount}/></td>;
                     })}
                 </tr>;
             })}
@@ -38,11 +39,9 @@ function generateTiles(rows, cols, numberOfMines) {
         tiles.push({hasMine: _.includes(mines, i)});
     }
 
-    tiles = tiles.map(function (tile, index) {
-        return _.assign(tile, {neighborMineCount: countNeighboringMines(tiles, cols, index)})
+    return tiles.map(function (tile, index) {
+        return _.assign(tile, {adjacentMineCount: countAdjacentMines(tiles, cols, index)})
     });
-
-    return _.chunk(tiles, cols);
 }
 
 function generateMineIndicies(numberOfMines, numberOfTiles) {
@@ -56,21 +55,23 @@ function generateMineIndicies(numberOfMines, numberOfTiles) {
     return mines;
 }
 
-function countNeighboringMines(tiles, cols, index) {
-    var topLeft = tiles[index - cols - 1];
-    var top = tiles[index - cols];
-    var topRight = tiles[index - cols + 1];
-    var right = tiles[index + 1];
-    var bottomRight = tiles[index + cols + 1];
-    var bottom = tiles[index + cols];
-    var bottomLeft = tiles[index + cols - 1];
-    var left = tiles[index - 1];
+function getAdjacentTiles(tiles, cols, index) {
+    var topLeft = tiles[index - cols - 1] || {};
+    var top = tiles[index - cols] || {};
+    var topRight = tiles[index - cols + 1] || {};
+    var right = tiles[index + 1] || {};
+    var bottomRight = tiles[index + cols + 1] || {};
+    var bottom = tiles[index + cols] || {};
+    var bottomLeft = tiles[index + cols - 1] || {};
+    var left = tiles[index - 1] || {};
 
-    var neighbors = [topLeft, top, topRight, right, bottomRight, bottom, bottomLeft, left];
+    return [topLeft, top, topRight, right, bottomRight, bottom, bottomLeft, left];
+}
 
+function countAdjacentMines(tiles, cols, index) {
     var count = 0;
-    neighbors.forEach(function (neighbor) {
-        if (neighbor !== undefined && neighbor.hasMine) {
+    getAdjacentTiles(tiles, cols, index).forEach(function (adjacentTile) {
+        if (adjacentTile.hasMine) {
             count++;
         }
     });
