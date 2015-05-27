@@ -57,7 +57,7 @@ function revealTile(index, tiles, cols) {
 function revealAdjacentTiles(index, tiles, cols) {
     tiles[index].revealed = true;
 
-    getAdjacentTiles(tiles, cols, index).forEach(function (tile) {
+    getAdjacentTiles(index, tiles, cols).forEach(function (tile) {
         if (tile.key !== undefined) {
             revealTile(tile.key, tiles, cols);
         }
@@ -75,10 +75,10 @@ function generateTiles(rows, cols, numberOfMines) {
 
     return tiles.map(function (tile, index) {
         return _.assign(tile, {
-            adjacentMineCount: countAdjacentMines(tiles, cols, index),
+            adjacentMineCount: countAdjacentMines(index, tiles, cols),
             revealed: false,
             flagged: false
-        })
+        });
     });
 }
 
@@ -93,17 +93,13 @@ function generateMineIndicies(numberOfMines, numberOfTiles) {
     return mines;
 }
 
-function countAdjacentMines(tiles, cols, index) {
-    var count = 0;
-    getAdjacentTiles(tiles, cols, index).forEach(function (adjacentTile) {
-        if (adjacentTile.hasMine) {
-            count++;
-        }
-    });
-    return count;
+function countAdjacentMines(index, tiles, cols) {
+    return getAdjacentTiles(index, tiles, cols).reduce(function (prev, cur) {
+        return prev + (cur.hasMine ? 1 : 0);
+    }, 0);
 }
 
-function getAdjacentTiles(tiles, cols, index) {
+function getAdjacentTiles(index, tiles, cols) {
     var leftEdge = index % cols === 0;
     var rightEdge = index % cols === cols - 1;
 
