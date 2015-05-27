@@ -67,14 +67,12 @@ function revealAdjacentTiles(index, tiles, cols) {
 function generateTiles(rows, cols, numberOfMines) {
     var numberOfTiles = rows * cols;
     var mines = generateMineIndicies(numberOfMines, numberOfTiles);
-    var tiles = [];
 
-    for (var i = 0; i < numberOfTiles; i++) {
-        tiles.push({key: i, hasMine: _.includes(mines, i)});
-    }
-
-    return tiles.map(function (tile, index) {
+    return _.fill(new Array(numberOfTiles), {}).map(function (tile, index) {
+        return {hasMine: _.includes(mines, index)};
+    }).map(function (tile, index, tiles) {
         return _.assign(tile, {
+            key: index,
             adjacentMineCount: countAdjacentMines(index, tiles, cols),
             revealed: false,
             flagged: false
