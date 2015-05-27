@@ -47,11 +47,14 @@ module.exports = React.createClass({
 });
 
 function revealTile(index, tiles, cols) {
-    if (tiles[index].revealed || tiles[index].adjacentMineCount !== 0) {
+    if (tiles[index].revealed || tiles[index].hasMine || tiles[index].adjacentMineCount !== 0) {
         tiles[index].revealed = true;
         return;
     }
+    revealAdjacentTiles(index, tiles, cols);
+}
 
+function revealAdjacentTiles(index, tiles, cols) {
     tiles[index].revealed = true;
 
     getAdjacentTiles(tiles, cols, index).forEach(function (tile) {
@@ -90,6 +93,16 @@ function generateMineIndicies(numberOfMines, numberOfTiles) {
     return mines;
 }
 
+function countAdjacentMines(tiles, cols, index) {
+    var count = 0;
+    getAdjacentTiles(tiles, cols, index).forEach(function (adjacentTile) {
+        if (adjacentTile.hasMine) {
+            count++;
+        }
+    });
+    return count;
+}
+
 function getAdjacentTiles(tiles, cols, index) {
     var leftEdge = index % cols === 0;
     var rightEdge = index % cols === cols - 1;
@@ -104,14 +117,4 @@ function getAdjacentTiles(tiles, cols, index) {
     var bottom = tiles[index + cols] || {};
 
     return [topLeft, top, topRight, right, bottomRight, bottom, bottomLeft, left];
-}
-
-function countAdjacentMines(tiles, cols, index) {
-    var count = 0;
-    getAdjacentTiles(tiles, cols, index).forEach(function (adjacentTile) {
-        if (adjacentTile.hasMine) {
-            count++;
-        }
-    });
-    return count;
 }
