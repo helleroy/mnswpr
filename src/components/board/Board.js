@@ -25,13 +25,15 @@ module.exports = React.createClass({
     },
     reveal: function (index) {
         var tiles = this.state.tiles.slice(0);
-        revealTile(index, tiles, this.state.board.cols);
-        this.setState({tiles: tiles});
+        this.setState({tiles: revealTiles(tiles[index], tiles, this.state.board.cols)});
     },
     flag: function (index) {
         var tiles = this.state.tiles.slice(0);
         tiles[index].flagged = true;
         this.setState({tiles: tiles})
+        if (isComplete(tiles, this.state.board)) {
+            alert('COMPLETE! :D');
+        }
     },
     render: function () {
         var difficulty = _.map(boards, function (board, difficulty) {
@@ -64,22 +66,35 @@ module.exports = React.createClass({
     }
 });
 
-function revealTile(index, tiles, cols) {
-    if (tiles[index].revealed || tiles[index].hasMine || tiles[index].adjacentMineCount !== 0) {
-        tiles[index].revealed = true;
-        return;
+function revealTiles(revealing, tiles, cols) {
+    var a = tiles.slice(0);
+    if (revealing.hasMine) {
+        return a.map(function (tile) {
+            return tile.hasMine ? _.assign(tile, {revealed: true}) : tile;
+        });
+    } else if (revealing.revealed || revealing.adjacentMineCount !== 0) {
+        a[revealing.key] = _.assign(revealing, {revealed: true});
+        return a;
     }
-    revealAdjacentTiles(index, tiles, cols);
+
+    a[revealing.key] = _.assign(revealing, {revealed: true});
+
+    getAdjacentTiles(revealing.key, tiles, cols).forEach(function (tile) {
+        a = revealTiles(tile, a, cols);
+    });
+
+    return a;
 }
 
-function revealAdjacentTiles(index, tiles, cols) {
-    tiles[index].revealed = true;
+function isComplete(tiles, board) {
+    return revealedTiles(tiles) === (board.rows * board.cols) - board.mines;
+}
 
-    getAdjacentTiles(index, tiles, cols).forEach(function (tile) {
-        if (tile.key !== undefined) {
-            revealTile(tile.key, tiles, cols);
-        }
-    });
+function revealedTiles(tiles) {
+    var reduce = tiles.reduce(function (prev, cur) {
+        return prev + (cur.revealed ? 1 : 0);
+    }, 0);
+    return reduce;
 }
 
 function generateTiles(rows, cols, numberOfMines) {
@@ -119,14 +134,14 @@ function getAdjacentTiles(index, tiles, cols) {
     var leftEdge = index % cols === 0;
     var rightEdge = index % cols === cols - 1;
 
-    var topLeft = leftEdge ? {} : tiles[index - cols - 1] || {};
-    var left = leftEdge ? {} : tiles[index - 1] || {};
-    var bottomLeft = leftEdge ? {} : tiles[index + cols - 1] || {};
-    var topRight = rightEdge ? {} : tiles[index - cols + 1] || {};
-    var right = rightEdge ? {} : tiles[index + 1] || {};
-    var bottomRight = rightEdge ? {} : tiles[index + cols + 1] || {};
-    var top = tiles[index - cols] || {};
-    var bottom = tiles[index + cols] || {};
+    var topLeft = leftEdge ? null : tiles[index - cols - 1] || null;
+    var left = leftEdge ? null : tiles[index - 1] || null;
+    var bottomLeft = leftEdge ? null : tiles[index + cols - 1] || null;
+    var topRight = rightEdge ? null : tiles[index - cols + 1] || null;
+    var right = rightEdge ? null : tiles[index + 1] || null;
+    var bottomRight = rightEdge ? null : tiles[index + cols + 1] || null;
+    var top = tiles[index - cols] || null;
+    var bottom = tiles[index + cols] || null;
 
-    return [topLeft, top, topRight, right, bottomRight, bottom, bottomLeft, left];
+    return _.compact([topLeft, top, topRight, right, bottomRight, bottom, bottomLeft, left]);
 }
