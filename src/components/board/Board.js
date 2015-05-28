@@ -4,15 +4,15 @@ var Immutable = require('immutable');
 
 var Tile = require('../tile/Tile');
 
-var boards = {
+var boards = Immutable.Map({
     easy: {cols: 8, rows: 8, mines: 10},
     intermediate: {cols: 16, rows: 16, mines: 40},
     hard: {cols: 32, rows: 16, mines: 99}
-};
+});
 
 module.exports = React.createClass({
     getInitialState: function () {
-        var board = boards.intermediate;
+        var board = boards.get('intermediate');
         return {
             board: board,
             tiles: generateTiles(board.rows, board.cols, board.mines)
@@ -31,7 +31,7 @@ module.exports = React.createClass({
         this.setState({tiles: this.state.tiles.set(index, {flagged: true})})
     },
     render: function () {
-        var difficulty = _.map(boards, function (board, difficulty) {
+        var difficulty = boards.map(function (board, difficulty) {
             return <a role="button" onClick={this.setBoard.bind(this, board)}>{difficulty}</a>
         }.bind(this));
         var tiles = _.chunk(this.state.tiles.toArray(), this.state.board.cols);
