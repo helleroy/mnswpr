@@ -10,15 +10,22 @@ var boards = {
 };
 
 module.exports = React.createClass({
-    getDefaultProps: function () {
-        return {board: boards.intermediate}
-    },
     getInitialState: function () {
-        return {tiles: generateTiles(this.props.board.rows, this.props.board.cols, this.props.board.mines)};
+        var board = boards.intermediate;
+        return {
+            board: board,
+            tiles: generateTiles(board.rows, board.cols, board.mines)
+        };
+    },
+    setBoard: function (board) {
+        this.setState({
+            board: board,
+            tiles: generateTiles(board.rows, board.cols, board.mines)
+        });
     },
     reveal: function (index) {
         var tiles = this.state.tiles.slice(0);
-        revealTile(index, tiles, this.props.board.cols);
+        revealTile(index, tiles, this.state.board.cols);
         this.setState({tiles: tiles});
     },
     flag: function (index) {
@@ -27,22 +34,33 @@ module.exports = React.createClass({
         this.setState({tiles: tiles})
     },
     render: function () {
-        var tiles = _.chunk(this.state.tiles, this.props.board.cols);
-        return <table className="board">
-            {tiles.map(function (row) {
-                return <tr>
-                    {row.map(function (tile) {
-                        return <td><Tile index={tile.key}
-                                         hasMine={tile.hasMine}
-                                         adjacentMineCount={tile.adjacentMineCount}
-                                         revealed={tile.revealed}
-                                         flagged={tile.flagged}
-                                         flag={this.flag}
-                                         reveal={this.reveal}/></td>;
-                    }.bind(this))}
-                </tr>;
-            }.bind(this))}
-        </table>;
+        var difficulty = _.map(boards, function (board, difficulty) {
+            return <a role="button" onClick={this.setBoard.bind(this, board)}>{difficulty}</a>
+        }.bind(this));
+        var tiles = _.chunk(this.state.tiles, this.state.board.cols);
+        return <div className="board">
+            <div className="difficultyPicker">
+                <p>Choose difficulty:</p>
+                {difficulty}
+            </div>
+            <table>
+                <tbody>
+                {tiles.map(function (row) {
+                    return <tr>
+                        {row.map(function (tile) {
+                            return <td><Tile index={tile.key}
+                                             hasMine={tile.hasMine}
+                                             adjacentMineCount={tile.adjacentMineCount}
+                                             revealed={tile.revealed}
+                                             flagged={tile.flagged}
+                                             flag={this.flag}
+                                             reveal={this.reveal}/></td>;
+                        }.bind(this))}
+                    </tr>;
+                }.bind(this))}
+                </tbody>
+            </table>
+        </div>;
     }
 });
 
