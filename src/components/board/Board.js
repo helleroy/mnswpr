@@ -93,7 +93,7 @@ function generateTiles(rows, cols, numberOfMines) {
     var numberOfTiles = rows * cols;
     var mines = generateMineIndicies(numberOfMines, numberOfTiles);
 
-    return new Immutable.List(_.fill(new Array(numberOfTiles), {})).map(function (tile, index) {
+    return Immutable.List(_.fill(Array(numberOfTiles), {})).map(function (tile, index) {
         return {hasMine: mines.includes(index)};
     }).map(function (tile, index, tiles) {
         return _.assign(tile, {
@@ -106,7 +106,7 @@ function generateTiles(rows, cols, numberOfMines) {
 }
 
 function generateMineIndicies(numberOfMines, numberOfTiles) {
-    return new Immutable.List(_.fill(new Array(numberOfMines), {})).map(function (mine, index, mines) {
+    return Immutable.List(_.fill(Array(numberOfMines), {})).map(function (mine, index, mines) {
         var random;
         do {
             random = _.random(0, numberOfTiles - 1);
@@ -136,7 +136,7 @@ function getAdjacentTiles(index, tiles, cols) {
     var top = topEdge ? null : tiles.get(index - cols);
     var bottom = bottomEdge ? null : tiles.get(index + cols);
 
-    return new Immutable.List([topLeft, top, topRight, right, bottomRight, bottom, bottomLeft, left])
+    return Immutable.List([topLeft, top, topRight, right, bottomRight, bottom, bottomLeft, left])
         .filter(function (tile) {
             return tile !== null;
         });
