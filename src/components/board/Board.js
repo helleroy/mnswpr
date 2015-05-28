@@ -1,5 +1,6 @@
 var React = require('react');
 var _ = require('lodash');
+var Immutable = require('immutable');
 
 var Tile = require('../tile/Tile');
 
@@ -24,22 +25,16 @@ module.exports = React.createClass({
         });
     },
     reveal: function (index) {
-        var tiles = this.state.tiles.slice(0);
-        this.setState({tiles: revealTiles(tiles[index], tiles, this.state.board.cols)});
+        this.setState({tiles: revealTiles(this.state.tiles.get(index), this.state.tiles, this.state.board.cols)});
     },
     flag: function (index) {
-        var tiles = this.state.tiles.slice(0);
-        tiles[index].flagged = true;
-        this.setState({tiles: tiles})
-        if (isComplete(tiles, this.state.board)) {
-            alert('COMPLETE! :D');
-        }
+        this.setState({tiles: this.state.tiles.set(index, {flagged: true})})
     },
     render: function () {
         var difficulty = _.map(boards, function (board, difficulty) {
             return <a role="button" onClick={this.setBoard.bind(this, board)}>{difficulty}</a>
         }.bind(this));
-        var tiles = _.chunk(this.state.tiles, this.state.board.cols);
+        var tiles = _.chunk(this.state.tiles.toArray(), this.state.board.cols);
         return <div className="board">
             <div className="difficultyPicker">
                 <p>Choose difficulty:</p>
@@ -67,23 +62,21 @@ module.exports = React.createClass({
 });
 
 function revealTiles(revealing, tiles, cols) {
-    var a = tiles.slice(0);
     if (revealing.hasMine) {
-        return a.map(function (tile) {
+        return tiles.map(function (tile) {
             return tile.hasMine ? _.assign(tile, {revealed: true}) : tile;
         });
     } else if (revealing.revealed || revealing.adjacentMineCount !== 0) {
-        a[revealing.key] = _.assign(revealing, {revealed: true});
-        return a;
+        return tiles.set(revealing.key, _.assign(revealing, {revealed: true}));
     }
 
-    a[revealing.key] = _.assign(revealing, {revealed: true});
+    tiles = tiles.set(revealing.key, _.assign(revealing, {revealed: true}));
 
     getAdjacentTiles(revealing.key, tiles, cols).forEach(function (tile) {
-        a = revealTiles(tile, a, cols);
+        tiles = revealTiles(tile, tiles, cols);
     });
 
-    return a;
+    return tiles;
 }
 
 function isComplete(tiles, board) {
@@ -91,18 +84,17 @@ function isComplete(tiles, board) {
 }
 
 function revealedTiles(tiles) {
-    var reduce = tiles.reduce(function (prev, cur) {
+    return tiles.reduce(function (prev, cur) {
         return prev + (cur.revealed ? 1 : 0);
     }, 0);
-    return reduce;
 }
 
 function generateTiles(rows, cols, numberOfMines) {
     var numberOfTiles = rows * cols;
     var mines = generateMineIndicies(numberOfMines, numberOfTiles);
 
-    return _.fill(new Array(numberOfTiles), {}).map(function (tile, index) {
-        return {hasMine: _.includes(mines, index)};
+    return new Immutable.List(_.fill(new Array(numberOfTiles), {})).map(function (tile, index) {
+        return {hasMine: mines.includes(index)};
     }).map(function (tile, index, tiles) {
         return _.assign(tile, {
             key: index,
@@ -114,14 +106,13 @@ function generateTiles(rows, cols, numberOfMines) {
 }
 
 function generateMineIndicies(numberOfMines, numberOfTiles) {
-    var mines = [];
-    while (mines.length < numberOfMines) {
-        var random = _.random(0, numberOfTiles - 1);
-        if (!_.includes(mines, random)) {
-            mines.push(random);
-        }
-    }
-    return mines;
+    return new Immutable.List(_.fill(new Array(numberOfMines), {})).map(function (mine, index, mines) {
+        var random;
+        do {
+            random = _.random(0, numberOfTiles - 1);
+        } while (mines.includes(random));
+        return random;
+    });
 }
 
 function countAdjacentMines(index, tiles, cols) {
@@ -131,17 +122,22 @@ function countAdjacentMines(index, tiles, cols) {
 }
 
 function getAdjacentTiles(index, tiles, cols) {
+    var topEdge = index - cols < 0;
+    var bottomEdge = index + cols >= tiles.size;
     var leftEdge = index % cols === 0;
     var rightEdge = index % cols === cols - 1;
 
-    var topLeft = leftEdge ? null : tiles[index - cols - 1] || null;
-    var left = leftEdge ? null : tiles[index - 1] || null;
-    var bottomLeft = leftEdge ? null : tiles[index + cols - 1] || null;
-    var topRight = rightEdge ? null : tiles[index - cols + 1] || null;
-    var right = rightEdge ? null : tiles[index + 1] || null;
-    var bottomRight = rightEdge ? null : tiles[index + cols + 1] || null;
-    var top = tiles[index - cols] || null;
-    var bottom = tiles[index + cols] || null;
+    var topLeft = leftEdge || topEdge ? null : tiles.get(index - cols - 1);
+    var left = leftEdge ? null : tiles.get(index - 1);
+    var bottomLeft = leftEdge || bottomEdge ? null : tiles.get(index + cols - 1);
+    var topRight = rightEdge || topEdge ? null : tiles.get(index - cols + 1);
+    var right = rightEdge ? null : tiles.get(index + 1);
+    var bottomRight = rightEdge || bottomEdge ? null : tiles.get(index + cols + 1);
+    var top = topEdge ? null : tiles.get(index - cols);
+    var bottom = bottomEdge ? null : tiles.get(index + cols);
 
-    return _.compact([topLeft, top, topRight, right, bottomRight, bottom, bottomLeft, left]);
+    return new Immutable.List([topLeft, top, topRight, right, bottomRight, bottom, bottomLeft, left])
+        .filter(function (tile) {
+            return tile !== null;
+        });
 }
