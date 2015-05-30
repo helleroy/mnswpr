@@ -40,7 +40,7 @@ module.exports = React.createClass({
         this.setState({gameState: gameState});
     },
     reveal: function (index) {
-        this.setState({tiles: revealTiles(this.state.tiles.get(index), this.state.tiles, this.state.board.cols, this.setGameState)});
+        this.setState({tiles: revealTiles(this.state.tiles.get(index), this.state.tiles, this.state.board, this.setGameState)});
     },
     flag: function (index) {
         this.setState({tiles: this.state.tiles.set(index, {flagged: true})})
@@ -48,7 +48,8 @@ module.exports = React.createClass({
     render: function () {
         var modalContent = this.state.gameState === gameStates.get('FAILURE') ?
             <div>You failed! <a onClick={this.restart}>Retry</a></div> :
-            this.state.gameState === gameStates.get('VICTORY') ? <div>You won!</div> : null;
+            this.state.gameState === gameStates.get('VICTORY') ?
+                <div>You won! <a onClick={this.restart}>Play again</a></div> : null;
         var difficulty = boards.map(function (board, difficulty) {
             return <a role="button" onClick={this.setBoard.bind(this, board)}>{difficulty}</a>
         }.bind(this));
@@ -81,7 +82,7 @@ module.exports = React.createClass({
     }
 });
 
-function revealTiles(revealing, tiles, cols, gameStateCb) {
+function revealTiles(revealing, tiles, board, gameStateCb) {
     if (revealing.hasMine) {
         gameStateCb(gameStates.get('FAILURE'));
         return tiles.map(function (tile) {
@@ -93,8 +94,13 @@ function revealTiles(revealing, tiles, cols, gameStateCb) {
 
     tiles = tiles.set(revealing.key, _.assign(revealing, {revealed: true}));
 
-    getAdjacentTiles(revealing.key, tiles, cols).forEach(function (tile) {
-        tiles = revealTiles(tile, tiles, cols);
+    if (isComplete(tiles, board)) {
+        gameStateCb(gameStates.get('VICTORY'));
+        return tiles;
+    }
+
+    getAdjacentTiles(revealing.key, tiles, board.cols).forEach(function (tile) {
+        tiles = revealTiles(tile, tiles, board, gameStateCb);
     });
 
     return tiles;
