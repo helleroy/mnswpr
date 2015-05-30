@@ -3,6 +3,7 @@ var _ = require('lodash');
 var Immutable = require('immutable');
 
 var Tile = require('../tile/Tile');
+var Modal = require('../modal/Modal');
 
 var boards = Immutable.Map({
     easy: {cols: 8, rows: 8, mines: 10},
@@ -10,27 +11,44 @@ var boards = Immutable.Map({
     hard: {cols: 32, rows: 16, mines: 99}
 });
 
+var gameStates = Immutable.Map({
+    PLAYING: 1,
+    VICTORY: 2,
+    FAILURE: 3
+});
+
 module.exports = React.createClass({
     getInitialState: function () {
         var board = boards.get('intermediate');
         return {
             board: board,
-            tiles: generateTiles(board.rows, board.cols, board.mines)
+            tiles: generateTiles(board.rows, board.cols, board.mines),
+            gameState: gameStates.get('PLAYING')
         };
     },
     setBoard: function (board) {
         this.setState({
             board: board,
-            tiles: generateTiles(board.rows, board.cols, board.mines)
+            tiles: generateTiles(board.rows, board.cols, board.mines),
+            gameState: gameStates.get('PLAYING')
         });
     },
+    restart: function () {
+        this.setBoard(this.state.board);
+    },
+    setGameState: function (gameState) {
+        this.setState({gameState: gameState});
+    },
     reveal: function (index) {
-        this.setState({tiles: revealTiles(this.state.tiles.get(index), this.state.tiles, this.state.board.cols)});
+        this.setState({tiles: revealTiles(this.state.tiles.get(index), this.state.tiles, this.state.board.cols, this.setGameState)});
     },
     flag: function (index) {
         this.setState({tiles: this.state.tiles.set(index, {flagged: true})})
     },
     render: function () {
+        var modalContent = this.state.gameState === gameStates.get('FAILURE') ?
+            <div>You failed! <a onClick={this.restart}>Retry</a></div> :
+            this.state.gameState === gameStates.get('VICTORY') ? <div>You won!</div> : null;
         var difficulty = boards.map(function (board, difficulty) {
             return <a role="button" onClick={this.setBoard.bind(this, board)}>{difficulty}</a>
         }.bind(this));
@@ -58,12 +76,14 @@ module.exports = React.createClass({
                 }.bind(this))}
                 </tbody>
             </table>
+            <Modal isOpen={this.state.gameState != gameStates.get('PLAYING')}>{modalContent}</Modal>
         </div>;
     }
 });
 
-function revealTiles(revealing, tiles, cols) {
+function revealTiles(revealing, tiles, cols, gameStateCb) {
     if (revealing.hasMine) {
+        gameStateCb(gameStates.get('FAILURE'));
         return tiles.map(function (tile) {
             return tile.hasMine ? _.assign(tile, {revealed: true}) : tile;
         });
