@@ -4,8 +4,7 @@ module.exports = React.createClass({
     onClick: function (event) {
         if (this.props.revealed) {
             return;
-        }
-        if (event.ctrlKey) {
+        } else if (event.altKey) {
             this.props.flag(this.props.index);
         } else if (!this.props.flagged) {
             this.props.reveal(this.props.index);

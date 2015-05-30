@@ -43,7 +43,8 @@ module.exports = React.createClass({
         this.setState({tiles: revealTiles(this.state.tiles.get(index), this.state.tiles, this.state.board, this.setGameState)});
     },
     flag: function (index) {
-        this.setState({tiles: this.state.tiles.set(index, {flagged: true})})
+        var tile = this.state.tiles.get(index);
+        this.setState({tiles: this.state.tiles.set(index, _.assign(tile, {flagged: !tile.flagged}))})
     },
     render: function () {
         var modalContent = this.state.gameState === gameStates.get('FAILURE') ?
