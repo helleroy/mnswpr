@@ -22,14 +22,14 @@ module.exports = React.createClass({
         var board = boards.get('intermediate');
         return {
             board: board,
-            tiles: generateTiles(board.rows, board.cols, board.mines),
+            tiles: generateTiles(board),
             gameState: gameStates.get('PLAYING')
         };
     },
     setBoard: function (board) {
         this.setState({
             board: board,
-            tiles: generateTiles(board.rows, board.cols, board.mines),
+            tiles: generateTiles(board),
             gameState: gameStates.get('PLAYING')
         });
     },
@@ -66,7 +66,7 @@ module.exports = React.createClass({
                     return <tr key={'row' + index}>
                         {row.map(function (tile, index) {
                             return <td key={'tile' + index}>
-                                <Tile index={tile.key}
+                                <Tile index={tile.index}
                                       hasMine={tile.hasMine}
                                       adjacentMineCount={tile.adjacentMineCount}
                                       revealed={tile.revealed}
@@ -90,17 +90,17 @@ function revealTiles(revealing, tiles, board, gameStateCb) {
             return tile.hasMine ? _.assign(tile, {revealed: true}) : tile;
         });
     } else if (revealing.revealed || revealing.adjacentMineCount !== 0) {
-        return tiles.set(revealing.key, _.assign(revealing, {revealed: true}));
+        return tiles.set(revealing.index, _.assign(revealing, {revealed: true}));
     }
 
-    tiles = tiles.set(revealing.key, _.assign(revealing, {revealed: true}));
+    tiles = tiles.set(revealing.index, _.assign(revealing, {revealed: true}));
 
     if (isComplete(tiles, board)) {
         gameStateCb(gameStates.get('VICTORY'));
         return tiles;
     }
 
-    getAdjacentTiles(revealing.key, tiles, board.cols).forEach(function (tile) {
+    getAdjacentTiles(revealing.index, tiles, board.cols).forEach(function (tile) {
         tiles = revealTiles(tile, tiles, board, gameStateCb);
     });
 
@@ -117,16 +117,16 @@ function revealedTiles(tiles) {
     }, 0);
 }
 
-function generateTiles(rows, cols, numberOfMines) {
-    var numberOfTiles = rows * cols;
-    var mines = generateMineIndicies(numberOfMines, numberOfTiles);
+function generateTiles(board) {
+    var numberOfTiles = board.rows * board.cols;
+    var mines = generateMineIndicies(board.mines, numberOfTiles);
 
     return Immutable.List(_.fill(new Array(numberOfTiles), {})).map(function (tile, index) {
         return {hasMine: mines.includes(index)};
     }).map(function (tile, index, tiles) {
         return _.assign(tile, {
-            key: index,
-            adjacentMineCount: countAdjacentMines(index, tiles, cols),
+            index: index,
+            adjacentMineCount: countAdjacentMines(index, tiles, board.cols),
             revealed: false,
             flagged: false
         });
