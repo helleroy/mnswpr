@@ -91,28 +91,23 @@ function revealTiles(revealing, tiles, board, gameStateCb) {
         });
     } else if (revealing.revealed || revealing.adjacentMineCount !== 0) {
         tiles = tiles.set(revealing.index, _.assign(revealing, {revealed: true}));
-        if (isComplete(tiles, board)) {
-            gameStateCb(gameStates.get('VICTORY'));
-        }
-        return tiles;
+        return checkCompleteness(tiles, board, gameStateCb);
     }
 
     tiles = tiles.set(revealing.index, _.assign(revealing, {revealed: true}));
-
-    if (isComplete(tiles, board)) {
-        gameStateCb(gameStates.get('VICTORY'));
-        return tiles;
-    }
 
     getAdjacentTiles(revealing.index, tiles, board.cols).forEach(function (tile) {
         tiles = revealTiles(tile, tiles, board, gameStateCb);
     });
 
-    return tiles;
+    return checkCompleteness(tiles, board, gameStateCb);
 }
 
-function isComplete(tiles, board) {
-    return revealedTiles(tiles) === (board.rows * board.cols) - board.mines;
+function checkCompleteness(tiles, board, gameStateCb) {
+    if (revealedTiles(tiles) === (board.rows * board.cols) - board.mines) {
+        gameStateCb(gameStates.get('VICTORY'));
+    }
+    return tiles;
 }
 
 function revealedTiles(tiles) {
