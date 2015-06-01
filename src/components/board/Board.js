@@ -134,13 +134,14 @@ function generateTiles(board) {
 }
 
 function generateMineIndicies(numberOfMines, numberOfTiles) {
-    return Immutable.List(_.fill(new Array(numberOfMines), {})).map(function (mine, index, mines) {
-        var random;
-        do {
-            random = _.random(0, numberOfTiles - 1);
-        } while (mines.includes(random));
-        return random;
-    });
+    var mines = Immutable.List([]);
+    while (mines.size < numberOfMines) {
+        var random = _.random(0, numberOfTiles - 1)
+        if (!mines.includes(random)) {
+            mines = mines.push(random);
+        }
+    }
+    return mines;
 }
 
 function countAdjacentMines(index, tiles, cols) {
