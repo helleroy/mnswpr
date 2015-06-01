@@ -1,4 +1,6 @@
 var React = require('react');
+var _ = require('lodash');
+var moment = require('moment');
 
 var Common = require('../common/Common');
 var Board = require('../board/Board');
@@ -8,8 +10,17 @@ module.exports = React.createClass({
     getInitialState: function () {
         return {
             board: Common.Board.get('INTERMEDIATE'),
-            gameState: Common.GameState.get('PLAYING')
+            gameState: Common.GameState.get('PLAYING'),
+            timer: {start: Date.now(), current: 0}
         };
+    },
+    componentDidMount: function () {
+        this.timerInterval = this.createInterval();
+    },
+    componentWillUpdate: function (nextProps, nextState) {
+        if (nextState.gameState !== Common.GameState.get('PLAYING')) {
+            clearInterval(this.timerInterval);
+        }
     },
     setBoard: function (board) {
         this.setState({board: board});
@@ -17,9 +28,16 @@ module.exports = React.createClass({
     setGameState: function (gameState) {
         this.setState({gameState: gameState});
     },
+    createInterval: function () {
+        return setInterval(function () {
+            this.setState({timer: _.assign(this.state.timer, {current: Date.now() - this.state.timer.start})})
+        }.bind(this), 1000);
+    },
     restart: function (board) {
         this.setBoard(board);
         this.setGameState(Common.GameState.get('PLAYING'));
+        this.setState({timer: {start: Date.now(), current: 0}});
+        this.timerInterval = this.createInterval();
     },
     render: function () {
         var alertContent = this.state.gameState === Common.GameState.get('FAILURE') ?
@@ -36,7 +54,10 @@ module.exports = React.createClass({
                 <p>Choose difficulty:</p>
                 {difficulty}
             </div>
+
             <Board board={this.state.board} gameState={this.state.gameState} setGameState={this.setGameState}/>
+
+            <div className="timer">{moment(this.state.timer.current).format('mm:ss')}</div>
         </div>
     }
 });
