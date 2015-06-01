@@ -15,7 +15,7 @@ module.exports = React.createClass({
         };
     },
     componentDidMount: function () {
-        this.timerInterval = this.createInterval();
+        this.createTimerInterval();
     },
     componentWillUpdate: function (nextProps, nextState) {
         if (nextState.gameState !== Common.GameState.get('PLAYING')) {
@@ -28,8 +28,9 @@ module.exports = React.createClass({
     setGameState: function (gameState) {
         this.setState({gameState: gameState});
     },
-    createInterval: function () {
-        return setInterval(function () {
+    createTimerInterval: function () {
+        clearInterval(this.timerInterval);
+        this.timerInterval = setInterval(function () {
             this.setState({timer: this.state.timer.merge({current: Date.now() - this.state.timer.get('start')})});
         }.bind(this), 1000);
     },
@@ -37,7 +38,7 @@ module.exports = React.createClass({
         this.setBoard(board);
         this.setGameState(Common.GameState.get('PLAYING'));
         this.setState({timer: Immutable.Map({start: Date.now(), current: 0})});
-        this.timerInterval = this.createInterval();
+        this.createTimerInterval();
     },
     render: function () {
         var alertContent = this.state.gameState === Common.GameState.get('FAILURE') ?
