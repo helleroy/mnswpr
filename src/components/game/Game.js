@@ -1,6 +1,6 @@
 var React = require('react');
-var _ = require('lodash');
 var moment = require('moment');
+var Immutable = require('immutable');
 
 var Common = require('../common/Common');
 var Board = require('../board/Board');
@@ -11,7 +11,7 @@ module.exports = React.createClass({
         return {
             board: Common.Board.get('INTERMEDIATE'),
             gameState: Common.GameState.get('PLAYING'),
-            timer: {start: Date.now(), current: 0}
+            timer: Immutable.Map({start: Date.now(), current: 0})
         };
     },
     componentDidMount: function () {
@@ -30,13 +30,13 @@ module.exports = React.createClass({
     },
     createInterval: function () {
         return setInterval(function () {
-            this.setState({timer: _.assign(this.state.timer, {current: Date.now() - this.state.timer.start})})
+            this.setState({timer: this.state.timer.merge({current: Date.now() - this.state.timer.get('start')})});
         }.bind(this), 1000);
     },
     restart: function (board) {
         this.setBoard(board);
         this.setGameState(Common.GameState.get('PLAYING'));
-        this.setState({timer: {start: Date.now(), current: 0}});
+        this.setState({timer: Immutable.Map({start: Date.now(), current: 0})});
         this.timerInterval = this.createInterval();
     },
     render: function () {
@@ -57,7 +57,7 @@ module.exports = React.createClass({
 
             <Board board={this.state.board} gameState={this.state.gameState} setGameState={this.setGameState}/>
 
-            <div className="timer">{moment(this.state.timer.current).format('mm:ss')}</div>
+            <div className="timer">{moment(this.state.timer.get('current')).format('mm:ss')}</div>
         </div>
     }
 });
