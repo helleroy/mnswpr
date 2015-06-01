@@ -2,38 +2,25 @@ var React = require('react');
 var _ = require('lodash');
 var Immutable = require('immutable');
 
+var Common = require('../common/Common');
 var Tile = require('../tile/Tile');
-var Modal = require('../modal/Modal');
-
-var gameStates = Immutable.Map({
-    PLAYING: 1,
-    VICTORY: 2,
-    FAILURE: 3
-});
 
 module.exports = React.createClass({
     getInitialState: function () {
-        return {
-            tiles: generateTiles(this.props.board),
-            gameState: gameStates.get('PLAYING')
-        };
+        return {tiles: generateTiles(this.props.board)};
     },
     componentWillReceiveProps: function (nextProps) {
         if (this.props.board !== nextProps.board) {
-            this.setBoard(nextProps.board);
+            this.newBoard(nextProps.board);
+        } else if (this.props.gameState !== nextProps.gameState && nextProps.gameState === Common.GameState.get('PLAYING')) {
+            this.newBoard(nextProps.board);
         }
     },
-    setBoard: function (board) {
-        this.setState({
-            tiles: generateTiles(board),
-            gameState: gameStates.get('PLAYING')
-        });
-    },
-    restart: function () {
-        this.setBoard(this.props.board);
+    newBoard: function (board) {
+        this.setState({tiles: generateTiles(board)});
     },
     setGameState: function (gameState) {
-        this.setState({gameState: gameState});
+        this.props.setGameState(gameState);
     },
     reveal: function (index) {
         this.setState({tiles: revealTiles(this.state.tiles.get(index), this.state.tiles, this.props.board, this.setGameState)});
@@ -43,10 +30,6 @@ module.exports = React.createClass({
         this.setState({tiles: this.state.tiles.set(index, _.assign(tile, {flagged: !tile.flagged}))})
     },
     render: function () {
-        var modalContent = this.state.gameState === gameStates.get('FAILURE') ?
-            <div>You failed! <a onClick={this.restart}>Retry</a></div> :
-            this.state.gameState === gameStates.get('VICTORY') ?
-                <div>You won! <a onClick={this.restart}>Play again</a></div> : null;
         var tiles = _.chunk(this.state.tiles.toArray(), this.props.board.cols);
         return <div className="board">
             <table>
@@ -67,14 +50,13 @@ module.exports = React.createClass({
                 }.bind(this))}
                 </tbody>
             </table>
-            <Modal isOpen={this.state.gameState != gameStates.get('PLAYING')}>{modalContent}</Modal>
         </div>;
     }
 });
 
 function revealTiles(revealing, tiles, board, gameStateCb) {
     if (revealing.hasMine) {
-        gameStateCb(gameStates.get('FAILURE'));
+        gameStateCb(Common.GameState.get('FAILURE'));
         return tiles.map(function (tile) {
             return tile.hasMine ? _.assign(tile, {revealed: true}) : tile;
         });
@@ -94,7 +76,7 @@ function revealTiles(revealing, tiles, board, gameStateCb) {
 
 function checkCompleteness(tiles, board, gameStateCb) {
     if (revealedTiles(tiles) === (board.rows * board.cols) - board.mines) {
-        gameStateCb(gameStates.get('VICTORY'));
+        gameStateCb(Common.GameState.get('VICTORY'));
     }
     return tiles;
 }
