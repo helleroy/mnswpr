@@ -42,9 +42,9 @@ module.exports = React.createClass({
     },
     render: function () {
         var alertContent = this.state.gameState === Common.GameState.get('FAILURE') ?
-            <div>You failed! <a onClick={this.restart.bind(this, this.state.board)}>Retry</a></div> :
+            <div><p>You failed!</p><a onClick={this.restart.bind(this, this.state.board)}>Retry</a></div> :
             this.state.gameState === Common.GameState.get('VICTORY') ?
-                <div>You won! <a onClick={this.restart.bind(this, this.state.board)}>Play again</a></div> : null;
+                <div><p>You won!</p><a onClick={this.restart.bind(this, this.state.board)}>Play again</a></div> : null;
         var difficulty = Common.Board.map(function (board, difficulty) {
             return <a role="button" onClick={this.restart.bind(this, board)}>{difficulty.toLowerCase()}</a>;
         }.bind(this));
