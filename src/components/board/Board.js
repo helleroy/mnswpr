@@ -90,7 +90,11 @@ function revealTiles(revealing, tiles, board, gameStateCb) {
             return tile.hasMine ? _.assign(tile, {revealed: true}) : tile;
         });
     } else if (revealing.revealed || revealing.adjacentMineCount !== 0) {
-        return tiles.set(revealing.index, _.assign(revealing, {revealed: true}));
+        tiles = tiles.set(revealing.index, _.assign(revealing, {revealed: true}));
+        if (isComplete(tiles, board)) {
+            gameStateCb(gameStates.get('VICTORY'));
+        }
+        return tiles;
     }
 
     tiles = tiles.set(revealing.index, _.assign(revealing, {revealed: true}));
