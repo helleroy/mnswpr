@@ -5,12 +5,6 @@ var Immutable = require('immutable');
 var Tile = require('../tile/Tile');
 var Modal = require('../modal/Modal');
 
-var boards = Immutable.Map({
-    easy: {cols: 8, rows: 8, mines: 10},
-    intermediate: {cols: 16, rows: 16, mines: 40},
-    hard: {cols: 32, rows: 16, mines: 99}
-});
-
 var gameStates = Immutable.Map({
     PLAYING: 1,
     VICTORY: 2,
@@ -19,28 +13,30 @@ var gameStates = Immutable.Map({
 
 module.exports = React.createClass({
     getInitialState: function () {
-        var board = boards.get('intermediate');
         return {
-            board: board,
-            tiles: generateTiles(board),
+            tiles: generateTiles(this.props.board),
             gameState: gameStates.get('PLAYING')
         };
     },
+    componentWillReceiveProps: function (nextProps) {
+        if (this.props.board !== nextProps.board) {
+            this.setBoard(nextProps.board);
+        }
+    },
     setBoard: function (board) {
         this.setState({
-            board: board,
             tiles: generateTiles(board),
             gameState: gameStates.get('PLAYING')
         });
     },
     restart: function () {
-        this.setBoard(this.state.board);
+        this.setBoard(this.props.board);
     },
     setGameState: function (gameState) {
         this.setState({gameState: gameState});
     },
     reveal: function (index) {
-        this.setState({tiles: revealTiles(this.state.tiles.get(index), this.state.tiles, this.state.board, this.setGameState)});
+        this.setState({tiles: revealTiles(this.state.tiles.get(index), this.state.tiles, this.props.board, this.setGameState)});
     },
     flag: function (index) {
         var tile = this.state.tiles.get(index);
@@ -51,15 +47,8 @@ module.exports = React.createClass({
             <div>You failed! <a onClick={this.restart}>Retry</a></div> :
             this.state.gameState === gameStates.get('VICTORY') ?
                 <div>You won! <a onClick={this.restart}>Play again</a></div> : null;
-        var difficulty = boards.map(function (board, difficulty) {
-            return <a role="button" onClick={this.setBoard.bind(this, board)}>{difficulty}</a>
-        }.bind(this));
-        var tiles = _.chunk(this.state.tiles.toArray(), this.state.board.cols);
+        var tiles = _.chunk(this.state.tiles.toArray(), this.props.board.cols);
         return <div className="board">
-            <div className="difficultyPicker">
-                <p>Choose difficulty:</p>
-                {difficulty}
-            </div>
             <table>
                 <tbody>
                 {tiles.map(function (row, index) {
@@ -135,7 +124,7 @@ function generateTiles(board) {
 function generateMineIndicies(numberOfMines, numberOfTiles) {
     var mines = Immutable.List([]);
     while (mines.size < numberOfMines) {
-        var random = _.random(0, numberOfTiles - 1)
+        var random = _.random(0, numberOfTiles - 1);
         if (!mines.includes(random)) {
             mines = mines.push(random);
         }
