@@ -5,7 +5,7 @@ module.exports = React.createClass({
         return {isOpen: false};
     },
     render: function () {
-        return this.props.isOpen ? <div className="modal">
+        return this.props.isOpen ? <div className="alert">
             {this.props.children}
         </div> : null;
     }

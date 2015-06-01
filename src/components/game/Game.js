@@ -2,7 +2,7 @@ var React = require('react');
 
 var Common = require('../common/Common');
 var Board = require('../board/Board');
-var Modal = require('../modal/Modal');
+var Alert = require('../alert/Alert');
 
 module.exports = React.createClass({
     getInitialState: function () {
@@ -17,25 +17,26 @@ module.exports = React.createClass({
     setGameState: function (gameState) {
         this.setState({gameState: gameState});
     },
-    restart: function () {
-        this.setBoard(this.state.board);
+    restart: function (board) {
+        this.setBoard(board);
         this.setGameState(Common.GameState.get('PLAYING'));
     },
     render: function () {
-        var modalContent = this.state.gameState === Common.GameState.get('FAILURE') ?
-            <div>You failed! <a onClick={this.restart}>Retry</a></div> :
+        var alertContent = this.state.gameState === Common.GameState.get('FAILURE') ?
+            <div>You failed! <a onClick={this.restart.bind(this, this.state.board)}>Retry</a></div> :
             this.state.gameState === Common.GameState.get('VICTORY') ?
-                <div>You won! <a onClick={this.restart}>Play again</a></div> : null;
+                <div>You won! <a onClick={this.restart.bind(this, this.state.board)}>Play again</a></div> : null;
         var difficulty = Common.Board.map(function (board, difficulty) {
-            return <a role="button" onClick={this.setBoard.bind(this, board)}>{difficulty.toLowerCase()}</a>;
+            return <a role="button" onClick={this.restart.bind(this, board)}>{difficulty.toLowerCase()}</a>;
         }.bind(this));
         return <div className="game">
+            <Alert isOpen={this.state.gameState != Common.GameState.get('PLAYING')}>{alertContent}</Alert>
+
             <div className="difficultyPicker">
                 <p>Choose difficulty:</p>
                 {difficulty}
             </div>
             <Board board={this.state.board} gameState={this.state.gameState} setGameState={this.setGameState}/>
-            <Modal isOpen={this.state.gameState != Common.GameState.get('PLAYING')}>{modalContent}</Modal>
         </div>
     }
 });
