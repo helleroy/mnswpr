@@ -19,10 +19,10 @@ module.exports = React.createClass({
             } else if (this.props.adjacentMineCount !== 0) {
                 className += ' neighborcount' + this.props.adjacentMineCount;
             }
+        } else if (this.props.flagged) {
+            className += ' flagged';
         }
-        var content = this.props.revealed ?
-            this.props.hasMine ? 'B' : this.props.adjacentMineCount === 0 ? '' : this.props.adjacentMineCount :
-            this.props.flagged ? '?' : '';
+        var content = this.props.revealed && !this.props.hasMine && this.props.adjacentMineCount !== 0 ? this.props.adjacentMineCount : '';
         return (
             <div className={className} onClick={this.onClick}>
                 {content}
