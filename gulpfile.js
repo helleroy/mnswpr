@@ -8,7 +8,7 @@ var watchify = require('watchify');
 var plumber = require('gulp-plumber');
 var notify = require("gulp-notify");
 
-var buildDir = './src/public/assets/js';
+var buildDir = './public/assets/js';
 
 function handleErrors() {
     var args = Array.prototype.slice.call(arguments);
@@ -40,7 +40,7 @@ gulp.task('style', function () {
     gulp.src('./src/less/main.less')
         .pipe(plumber())
         .pipe(less({paths: ['./src/less']}))
-        .pipe(gulp.dest('./src/public/assets/css/'))
+        .pipe(gulp.dest('./public/assets/css/'))
 });
 
 gulp.task('script-watch', function () {

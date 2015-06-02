@@ -3,9 +3,6 @@
   "version": "1.0.0",
   "description": "Minesweeper made with React",
   "main": "app.js",
-  "scripts": {
-    "start": "node src/server.js"
-  },
   "author": "helleroy <helleroy@gmail.com>",
   "license": "ISC",
   "dependencies": {
