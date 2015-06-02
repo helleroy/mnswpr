@@ -1,7 +1,7 @@
 {
-  "name": "reactgame",
+  "name": "mnswpr",
   "version": "1.0.0",
-  "description": "Some kind of game made with React",
+  "description": "Minesweeper made with React",
   "main": "app.js",
   "scripts": {
     "start": "node src/server.js"
