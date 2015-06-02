@@ -4,9 +4,11 @@ var gutil = require('gulp-util');
 var less = require('gulp-less');
 var browserify = require('browserify');
 var reactify = require('reactify');
-var watchify = require('watchify');
 var plumber = require('gulp-plumber');
 var notify = require("gulp-notify");
+var uglifycss = require('gulp-uglifycss');
+var uglify = require('gulp-uglify');
+var streamify = require('gulp-streamify');
 
 var buildDir = './public/assets/js';
 
@@ -32,6 +34,7 @@ gulp.task('script-build', function () {
     createBrowserify().bundle()
         .on('error', handleErrors)
         .pipe(source('app.js'))
+        .pipe(streamify(uglify()))
         .pipe(gulp.dest(buildDir + '/'));
 });
 
@@ -40,33 +43,25 @@ gulp.task('style', function () {
     gulp.src('./src/less/main.less')
         .pipe(plumber())
         .pipe(less({paths: ['./src/less']}))
+        .pipe(uglifycss())
         .pipe(gulp.dest('./public/assets/css/'))
 });
 
-gulp.task('script-watch', function () {
-    var bundler = watchify(createBrowserify())
-        .on('update', function () {
-            rebundle();
-        });
-
-    function rebundle() {
-        gutil.log('Recompiling scripts...');
-        bundler
-            .bundle()
-            .on('error', handleErrors)
-            .pipe(source('app.js'))
-            .pipe(gulp.dest(buildDir + '/'));
-    }
+gulp.task('script-dev', function () {
+    gutil.log('Compiling scripts...');
+    createBrowserify().bundle()
+        .on('error', handleErrors)
+        .pipe(source('app.js'))
+        .pipe(gulp.dest(buildDir + '/'));
 });
 
-gulp.task('watch', ['script-watch'], function () {
+gulp.task('watch', ['script-dev', 'style'], function () {
     gutil.log('Watching for changes...');
+    gulp.watch('./src/**/*.js', ['script-dev']);
     gulp.watch('./src/less/*.less', ['style']);
-    gulp.watch('./src/components/**/*.js', ['script-build']);
-    gulp.watch('./src/app.js', ['script-build']);
 });
 
 gulp.task('build', ['script-build', 'style']);
 
-gulp.task('default', ['build', 'watch']);
+gulp.task('default', ['watch']);
 
