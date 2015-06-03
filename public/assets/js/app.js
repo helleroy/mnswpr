@@ -40154,13 +40154,9 @@ module.exports = React.createClass({displayName: "exports",
                     return React.createElement("tr", {key: 'row' + index}, 
                         row.map(function (tile, index) {
                             return React.createElement("td", {key: 'tile' + index}, 
-                                React.createElement(Tile, {index: tile.index, 
-                                      hasMine: tile.hasMine, 
-                                      adjacentMineCount: tile.adjacentMineCount, 
-                                      revealed: tile.revealed, 
-                                      flagged: tile.flagged, 
-                                      flag: this.flag, 
-                                      reveal: this.reveal}));
+                                React.createElement(Tile, React.__spread({},  tile, 
+                                    {flag: this.flag, 
+                                    reveal: this.reveal})));
                         }.bind(this))
                     );
                 }.bind(this))

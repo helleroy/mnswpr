@@ -38,13 +38,9 @@ module.exports = React.createClass({
                     return <tr key={'row' + index}>
                         {row.map(function (tile, index) {
                             return <td key={'tile' + index}>
-                                <Tile index={tile.index}
-                                      hasMine={tile.hasMine}
-                                      adjacentMineCount={tile.adjacentMineCount}
-                                      revealed={tile.revealed}
-                                      flagged={tile.flagged}
-                                      flag={this.flag}
-                                      reveal={this.reveal}/></td>;
+                                <Tile {...tile}
+                                    flag={this.flag}
+                                    reveal={this.reveal}/></td>;
                         }.bind(this))}
                     </tr>;
                 }.bind(this))}
