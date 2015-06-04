@@ -40155,7 +40155,8 @@ module.exports = React.createClass({displayName: "exports",
                         row.map(function (tile, index) {
                             return React.createElement("td", {key: 'tile' + index}, 
                                 React.createElement(Tile, React.__spread({},  tile, 
-                                    {flag: this.flag, 
+                                    {gameState: this.props.gameState, 
+                                    flag: this.flag, 
                                     reveal: this.reveal})));
                         }.bind(this))
                     );
@@ -40342,9 +40343,11 @@ module.exports = React.createClass({displayName: "exports",
 },{"../alert/Alert":161,"../board/Board":162,"../common/Common":163,"immutable":3,"moment":5,"react":160}],165:[function(require,module,exports){
 var React = require('react');
 
+var Common = require('../common/Common');
+
 module.exports = React.createClass({displayName: "exports",
     onClick: function (event) {
-        if (this.props.revealed) {
+        if (this.props.revealed || this.props.gameState !== Common.GameState.get('PLAYING')) {
             return;
         } else if (event.altKey) {
             this.props.flag(this.props.index);
@@ -40374,4 +40377,4 @@ module.exports = React.createClass({displayName: "exports",
 })
 ;
 
-},{"react":160}]},{},[1]);
+},{"../common/Common":163,"react":160}]},{},[1]);
