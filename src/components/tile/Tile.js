@@ -1,8 +1,10 @@
 var React = require('react');
 
+var Common = require('../common/Common');
+
 module.exports = React.createClass({
     onClick: function (event) {
-        if (this.props.revealed) {
+        if (this.props.revealed || this.props.gameState !== Common.GameState.get('PLAYING')) {
             return;
         } else if (event.altKey) {
             this.props.flag(this.props.index);

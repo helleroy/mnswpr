@@ -39,6 +39,7 @@ module.exports = React.createClass({
                         {row.map(function (tile, index) {
                             return <td key={'tile' + index}>
                                 <Tile {...tile}
+                                    gameState={this.props.gameState}
                                     flag={this.flag}
                                     reveal={this.reveal}/></td>;
                         }.bind(this))}
