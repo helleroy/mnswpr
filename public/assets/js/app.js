@@ -40889,10 +40889,14 @@ module.exports = React.createClass({displayName: "exports",
             React.createElement("div", null, React.createElement("p", null, "You failed!"), React.createElement("a", {onClick: this.restart.bind(this, this.state.board)}, "Retry")) :
             this.state.gameState === GameConstants.gameStates.VICTORY ?
                 React.createElement("div", null, React.createElement("p", null, "You won!"), React.createElement("a", {onClick: this.restart.bind(this, this.state.board)}, "Play again")) : null;
+
         var difficulty = _.map(GameConstants.boards, function (board, difficulty) {
-            return React.createElement("a", {role: "button", key: difficulty, 
-                      onClick: this.restart.bind(this, board)}, difficulty.toLowerCase());
+            var className = this.state.board === board ? 'selected' : '';
+            return React.createElement("a", {role: "button", key: difficulty, className: className, onClick: this.restart.bind(this, board)}, 
+                difficulty.toLowerCase()
+            );
         }.bind(this));
+
         return React.createElement("div", {className: "game"}, 
             React.createElement(Alert, {isOpen: this.state.gameState != GameConstants.gameStates.PLAYING}, alertContent), 
 
