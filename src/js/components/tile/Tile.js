@@ -1,15 +1,16 @@
 var React = require('react');
 
-var Common = require('../common/Common');
+var GameActions = require('../../actions/GameActions');
+var GameConstants = require('../../constants/GameConstants');
 
 module.exports = React.createClass({
     onClick: function (event) {
-        if (this.props.revealed || this.props.gameState !== Common.GameState.get('PLAYING')) {
+        if (this.props.revealed || this.props.gameState !== GameConstants.gameStates.PLAYING) {
             return;
         } else if (event.altKey) {
-            this.props.flag(this.props.index);
+            GameActions.flagTile(this.props.index);
         } else if (!this.props.flagged) {
-            this.props.reveal(this.props.index);
+            GameActions.revealTile(this.props.index);
         }
     },
     render: function () {
@@ -31,5 +32,4 @@ module.exports = React.createClass({
             </div>
         );
     }
-})
-;
+});
