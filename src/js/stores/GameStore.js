@@ -4,6 +4,7 @@ var Immutable = require('immutable');
 
 var Dispatcher = require('../dispatcher/Dispatcher');
 var GameConstants = require('../constants/GameConstants');
+var Tile = require('../constants/Records').Tile;
 
 var CHANGE_EVENT = 'changed';
 
@@ -19,9 +20,9 @@ function generateTiles(board) {
     var mines = generateMineIndicies(board);
 
     return Immutable.List(_.fill(new Array(numberOfTiles(board)), {})).map(function (tile, index) {
-        return {hasMine: mines.includes(index)};
+        return new Tile({hasMine: mines.includes(index)});
     }).map(function (tile, index, tiles) {
-        return _.assign(tile, {
+        return tile.merge({
             index: index,
             adjacentMineCount: countAdjacentMines(index, tiles, board.cols),
             revealed: false,
@@ -45,14 +46,14 @@ function revealTiles(revealing, tiles, board) {
     if (revealing.hasMine) {
         state.gameState = GameConstants.gameStates.FAILURE;
         return tiles.map(function (tile) {
-            return tile.hasMine ? _.assign(tile, {revealed: true}) : tile;
+            return tile.hasMine ? tile.merge({revealed: true}) : tile;
         });
     } else if (revealing.revealed || revealing.adjacentMineCount !== 0) {
-        tiles = tiles.set(revealing.index, _.assign(revealing, {revealed: true}));
+        tiles = tiles.set(revealing.index, revealing.merge({revealed: true}));
         return checkCompleteness(tiles, board);
     }
 
-    tiles = tiles.set(revealing.index, _.assign(revealing, {revealed: true}));
+    tiles = tiles.set(revealing.index, revealing.merge({revealed: true}));
 
     getAdjacentTiles(revealing.index, tiles, board.cols).forEach(function (tile) {
         tiles = revealTiles(tile, tiles, board);
@@ -63,7 +64,7 @@ function revealTiles(revealing, tiles, board) {
 
 function toggleFlag(id, tiles) {
     var flagging = tiles.get(id);
-    return state.tiles.set(id, _.assign(flagging, {flagged: !flagging.flagged}));
+    return state.tiles.set(id, flagging.merge({flagged: !flagging.flagged}));
 }
 
 function checkCompleteness(tiles, board) {
