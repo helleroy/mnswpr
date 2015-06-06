@@ -40799,12 +40799,15 @@ module.exports = {
         });
     }
 };
-},{"../constants/GameConstants":171,"../dispatcher/Dispatcher":172}],167:[function(require,module,exports){
+},{"../constants/GameConstants":171,"../dispatcher/Dispatcher":173}],167:[function(require,module,exports){
 var React = require('react');
 
 module.exports = React.createClass({displayName: "exports",
     getDefaultProps: function () {
         return {isOpen: false};
+    },
+    shouldComponentUpdate: function (nextProps) {
+        return this.props.isOpen !== nextProps.isOpen;
     },
     render: function () {
         return this.props.isOpen ? React.createElement("div", {className: "alert"}, 
@@ -40815,11 +40818,13 @@ module.exports = React.createClass({displayName: "exports",
 },{"react":165}],168:[function(require,module,exports){
 var React = require('react');
 var _ = require('lodash');
-var Immutable = require('immutable');
 
 var Tile = require('../tile/Tile');
 
 module.exports = React.createClass({displayName: "exports",
+    shouldComponentUpdate: function (nextProps) {
+        return this.props.tiles !== nextProps.tiles;
+    },
     render: function () {
         var tiles = _.chunk(this.props.tiles.toArray(), this.props.board.cols);
         return React.createElement("div", {className: "board"}, 
@@ -40829,7 +40834,7 @@ module.exports = React.createClass({displayName: "exports",
                     return React.createElement("tr", {key: 'row' + index}, 
                         row.map(function (tile, index) {
                             return React.createElement("td", {key: 'tile' + index}, 
-                                React.createElement(Tile, React.__spread({},  tile, {gameState: this.props.gameState}))
+                                React.createElement(Tile, {tile: tile, gameState: this.props.gameState})
                             );
                         }.bind(this))
                     );
@@ -40839,7 +40844,7 @@ module.exports = React.createClass({displayName: "exports",
         );
     }
 });
-},{"../tile/Tile":170,"immutable":7,"lodash":9,"react":165}],169:[function(require,module,exports){
+},{"../tile/Tile":170,"lodash":9,"react":165}],169:[function(require,module,exports){
 var React = require('react');
 var moment = require('moment');
 var Immutable = require('immutable');
@@ -40904,35 +40909,39 @@ module.exports = React.createClass({displayName: "exports",
         this.setState(GameStore.getState());
     }
 });
-},{"../../actions/GameActions":166,"../../constants/GameConstants":171,"../../stores/GameStore":173,"../alert/Alert":167,"../board/Board":168,"immutable":7,"lodash":9,"moment":10,"react":165}],170:[function(require,module,exports){
+},{"../../actions/GameActions":166,"../../constants/GameConstants":171,"../../stores/GameStore":174,"../alert/Alert":167,"../board/Board":168,"immutable":7,"lodash":9,"moment":10,"react":165}],170:[function(require,module,exports){
 var React = require('react');
 
 var GameActions = require('../../actions/GameActions');
 var GameConstants = require('../../constants/GameConstants');
 
 module.exports = React.createClass({displayName: "exports",
+    shouldComponentUpdate: function (nextProps) {
+        return this.props.tile !== nextProps.tile;
+    },
     onClick: function (event) {
-        if (this.props.revealed || this.props.gameState !== GameConstants.gameStates.PLAYING) {
+        if (this.props.tile.revealed || this.props.gameState !== GameConstants.gameStates.PLAYING) {
             return;
-        } else if (event.altKey) {
-            GameActions.flagTile(this.props.index);
-        } else if (!this.props.flagged) {
-            GameActions.revealTile(this.props.index);
+        }
+        if (event.altKey) {
+            GameActions.flagTile(this.props.tile.index);
+        } else if (!this.props.tile.flagged) {
+            GameActions.revealTile(this.props.tile.index);
         }
     },
     render: function () {
         var className = 'tile';
-        if (this.props.revealed) {
+        if (this.props.tile.revealed) {
             className += ' revealed';
-            if (this.props.hasMine) {
+            if (this.props.tile.hasMine) {
                 className += ' mine';
-            } else if (this.props.adjacentMineCount !== 0) {
-                className += ' neighborcount' + this.props.adjacentMineCount;
+            } else if (this.props.tile.adjacentMineCount !== 0) {
+                className += ' neighborcount' + this.props.tile.adjacentMineCount;
             }
-        } else if (this.props.flagged) {
+        } else if (this.props.tile.flagged) {
             className += ' flagged';
         }
-        var content = this.props.revealed && !this.props.hasMine && this.props.adjacentMineCount !== 0 ? this.props.adjacentMineCount : '';
+        var content = this.props.tile.revealed && !this.props.tile.hasMine && this.props.tile.adjacentMineCount !== 0 ? this.props.tile.adjacentMineCount : '';
         return (
             React.createElement("div", {className: className, onClick: this.onClick}, 
                 content
@@ -40940,7 +40949,6 @@ module.exports = React.createClass({displayName: "exports",
         );
     }
 });
-
 },{"../../actions/GameActions":166,"../../constants/GameConstants":171,"react":165}],171:[function(require,module,exports){
 var keyMirror = require('keymirror');
 
@@ -40962,16 +40970,30 @@ module.exports = {
     }
 };
 },{"keymirror":8}],172:[function(require,module,exports){
+var Immutable = require('immutable');
+
+module.exports = {
+    Tile: Immutable.Record({
+        index: -1,
+        revealed: false,
+        flagged: false,
+        hasMine: false,
+        adjacentMineCount: 0
+    })
+};
+
+},{"immutable":7}],173:[function(require,module,exports){
 var Dispatcher = require('flux').Dispatcher;
 
 module.exports = new Dispatcher();
-},{"flux":4}],173:[function(require,module,exports){
+},{"flux":4}],174:[function(require,module,exports){
 var EventEmitter = require('events').EventEmitter;
 var _ = require('lodash');
 var Immutable = require('immutable');
 
 var Dispatcher = require('../dispatcher/Dispatcher');
 var GameConstants = require('../constants/GameConstants');
+var Tile = require('../constants/Records').Tile;
 
 var CHANGE_EVENT = 'changed';
 
@@ -40987,9 +41009,9 @@ function generateTiles(board) {
     var mines = generateMineIndicies(board);
 
     return Immutable.List(_.fill(new Array(numberOfTiles(board)), {})).map(function (tile, index) {
-        return {hasMine: mines.includes(index)};
+        return new Tile({hasMine: mines.includes(index)});
     }).map(function (tile, index, tiles) {
-        return _.assign(tile, {
+        return tile.merge({
             index: index,
             adjacentMineCount: countAdjacentMines(index, tiles, board.cols),
             revealed: false,
@@ -41013,14 +41035,14 @@ function revealTiles(revealing, tiles, board) {
     if (revealing.hasMine) {
         state.gameState = GameConstants.gameStates.FAILURE;
         return tiles.map(function (tile) {
-            return tile.hasMine ? _.assign(tile, {revealed: true}) : tile;
+            return tile.hasMine ? tile.merge({revealed: true}) : tile;
         });
     } else if (revealing.revealed || revealing.adjacentMineCount !== 0) {
-        tiles = tiles.set(revealing.index, _.assign(revealing, {revealed: true}));
+        tiles = tiles.set(revealing.index, revealing.merge({revealed: true}));
         return checkCompleteness(tiles, board);
     }
 
-    tiles = tiles.set(revealing.index, _.assign(revealing, {revealed: true}));
+    tiles = tiles.set(revealing.index, revealing.merge({revealed: true}));
 
     getAdjacentTiles(revealing.index, tiles, board.cols).forEach(function (tile) {
         tiles = revealTiles(tile, tiles, board);
@@ -41031,7 +41053,7 @@ function revealTiles(revealing, tiles, board) {
 
 function toggleFlag(id, tiles) {
     var flagging = tiles.get(id);
-    return state.tiles.set(id, _.assign(flagging, {flagged: !flagging.flagged}));
+    return state.tiles.set(id, flagging.merge({flagged: !flagging.flagged}));
 }
 
 function checkCompleteness(tiles, board) {
@@ -41117,4 +41139,4 @@ Dispatcher.register(function (action) {
 });
 
 module.exports = GameStore;
-},{"../constants/GameConstants":171,"../dispatcher/Dispatcher":172,"events":2,"immutable":7,"lodash":9}]},{},[1]);
+},{"../constants/GameConstants":171,"../constants/Records":172,"../dispatcher/Dispatcher":173,"events":2,"immutable":7,"lodash":9}]},{},[1]);
