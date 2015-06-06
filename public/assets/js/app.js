@@ -40799,7 +40799,6 @@ module.exports = {
         });
     }
 };
-
 },{"../constants/GameConstants":171,"../dispatcher/Dispatcher":172}],167:[function(require,module,exports){
 var React = require('react');
 
@@ -40940,9 +40939,7 @@ module.exports = React.createClass({displayName: "exports",
             )
         );
     }
-})
-;
-
+});
 },{"../../actions/GameActions":166,"../../constants/GameConstants":171,"react":165}],171:[function(require,module,exports){
 var keyMirror = require('keymirror');
 
@@ -40963,12 +40960,10 @@ module.exports = {
         HARD: {cols: 32, rows: 16, mines: 99}
     }
 };
-
 },{"keymirror":8}],172:[function(require,module,exports){
 var Dispatcher = require('flux').Dispatcher;
 
 module.exports = new Dispatcher();
-
 },{"flux":4}],173:[function(require,module,exports){
 var EventEmitter = require('events').EventEmitter;
 var _ = require('lodash');
@@ -41121,5 +41116,4 @@ Dispatcher.register(function (action) {
 });
 
 module.exports = GameStore;
-
 },{"../constants/GameConstants":171,"../dispatcher/Dispatcher":172,"events":2,"immutable":7,"lodash":9}]},{},[1]);

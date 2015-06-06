@@ -10,7 +10,10 @@ var uglifycss = require('gulp-uglifycss');
 var uglify = require('gulp-uglify');
 var streamify = require('gulp-streamify');
 
-var buildDir = './public/assets/js';
+var jsSrcDir = './src/js/';
+var jsBuildDir = './public/assets/js/';
+var lessSrcDir = './src/less/';
+var cssBuildDir = './public/assets/css/';
 
 function handleErrors() {
     var args = Array.prototype.slice.call(arguments);
@@ -23,7 +26,7 @@ function handleErrors() {
 
 function createBrowserify() {
     return browserify({
-        entries: ['./src/app.js'],
+        entries: [jsSrcDir + 'app.js'],
         transform: [reactify],
         debug: false
     });
@@ -35,16 +38,16 @@ gulp.task('script-build', function () {
         .on('error', handleErrors)
         .pipe(source('app.js'))
         .pipe(streamify(uglify()))
-        .pipe(gulp.dest(buildDir + '/'));
+        .pipe(gulp.dest(jsBuildDir));
 });
 
 gulp.task('style', function () {
     gutil.log('Compiling LESS...');
-    gulp.src('./src/less/main.less')
+    gulp.src(lessSrcDir + 'main.less')
         .pipe(plumber())
-        .pipe(less({paths: ['./src/less']}))
+        .pipe(less())
         .pipe(uglifycss())
-        .pipe(gulp.dest('./public/assets/css/'))
+        .pipe(gulp.dest(cssBuildDir))
 });
 
 gulp.task('script-dev', function () {
@@ -52,16 +55,15 @@ gulp.task('script-dev', function () {
     createBrowserify().bundle()
         .on('error', handleErrors)
         .pipe(source('app.js'))
-        .pipe(gulp.dest(buildDir + '/'));
+        .pipe(gulp.dest(jsBuildDir));
 });
 
 gulp.task('watch', ['script-dev', 'style'], function () {
     gutil.log('Watching for changes...');
-    gulp.watch('./src/**/*.js', ['script-dev']);
-    gulp.watch('./src/less/*.less', ['style']);
+    gulp.watch(jsSrcDir + '**/*.js', ['script-dev']);
+    gulp.watch(lessSrcDir + '**/*.less', ['style']);
 });
 
 gulp.task('build', ['script-build', 'style']);
 
 gulp.task('default', ['watch']);
-
