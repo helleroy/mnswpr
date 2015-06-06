@@ -43,7 +43,8 @@ module.exports = React.createClass({
             this.state.gameState === GameConstants.gameStates.VICTORY ?
                 <div><p>You won!</p><a onClick={this.restart.bind(this, this.state.board)}>Play again</a></div> : null;
         var difficulty = _.map(GameConstants.boards, function (board, difficulty) {
-            return <a role="button" key={difficulty} onClick={this.restart.bind(this, board)}>{difficulty.toLowerCase()}</a>;
+            return <a role="button" key={difficulty}
+                      onClick={this.restart.bind(this, board)}>{difficulty.toLowerCase()}</a>;
         }.bind(this));
         return <div className="game">
             <Alert isOpen={this.state.gameState != GameConstants.gameStates.PLAYING}>{alertContent}</Alert>
@@ -56,6 +57,11 @@ module.exports = React.createClass({
             <Board board={this.state.board} tiles={this.state.tiles} gameState={this.state.gameState}/>
 
             <div className="timer">{moment(this.state.timer.get('current')).format('mm:ss')}</div>
+            <div className="howto">
+                <h2>How to play:</h2>
+
+                <p><i>Left-click</i> to reveal. <i>ALT + left-click</i> to flag.</p>
+            </div>
         </div>
     },
     _onChange: function () {
