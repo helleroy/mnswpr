@@ -40886,11 +40886,11 @@ module.exports = React.createClass({displayName: "exports",
             );
         }.bind(this));
 
-        var bestTime = this.state.bestTimes[this.state.board.difficulty] ?
+        var bestTime = this.state.bestTimes.get(this.state.board.difficulty) ?
             React.createElement("p", {className: "bestTime"}, 
                 React.createElement("span", null, "Your best time on this difficulty: "), 
                 React.createElement("span", {className: "time bold"}, 
-                    moment(this.state.bestTimes[this.state.board.difficulty]).format('mm:ss')
+                    moment(this.state.bestTimes.get(this.state.board.difficulty)).format('mm:ss')
                 )
             ) : null;
 
@@ -41014,6 +41014,7 @@ var Dispatcher = require('../dispatcher/Dispatcher');
 var GameConstants = require('../constants/GameConstants');
 var Tile = require('../constants/Records').Tile;
 var Timer = require('../constants/Records').Timer;
+var Utils = require('../utils/Utils');
 
 var CHANGE_EVENT = 'changed';
 var BEST_TIMES_KEY = 'bestTimes';
@@ -41021,13 +41022,7 @@ var BEST_TIMES_KEY = 'bestTimes';
 var initialBoard = GameConstants.boards.INTERMEDIATE;
 var timerInterval = null;
 
-var state = {
-    tiles: emptyTiles(initialBoard),
-    board: initialBoard,
-    gameState: newGameState(GameConstants.gameStates.SETUP),
-    timer: newTimer(),
-    bestTimes: getFromLocalStorage(BEST_TIMES_KEY)
-};
+var state = _.assign({}, {bestTimes: Immutable.Map(Utils.getFromLocalStorage(BEST_TIMES_KEY))}, initialState(initialBoard));
 
 var GameStore = _.assign({}, EventEmitter.prototype, {
     getState: function () {
@@ -41159,13 +41154,6 @@ function newGameState(newGameState) {
     return newGameState;
 }
 
-function restartGame(board) {
-    state.board = board;
-    state.tiles = emptyTiles(board);
-    state.gameState = newGameState(GameConstants.gameStates.SETUP);
-    state.timer = newTimer();
-}
-
 function newTimer() {
     clearInterval(timerInterval);
     timerInterval = setInterval(function () {
@@ -41176,23 +41164,22 @@ function newTimer() {
 }
 
 function updateBestTime(difficulty, time) {
-    state.bestTimes[difficulty] = state.bestTimes[difficulty] || Number.MAX_VALUE;
-    if (state.bestTimes[difficulty] > time) {
-        var newBestTime = _.assign({}, state.bestTimes, Immutable.Map({}).set(difficulty, time).toObject());
-        setInLocalStorage(BEST_TIMES_KEY, newBestTime);
-        return newBestTime;
+    var bestTime = state.bestTimes.get(difficulty) || Number.MAX_VALUE;
+    if (bestTime > time) {
+        var bestTimes = state.bestTimes.merge(Immutable.Map([[difficulty, time]]));
+        Utils.setInLocalStorage(BEST_TIMES_KEY, bestTimes);
+        return bestTimes;
     }
     return state.bestTimes;
 }
 
-function getFromLocalStorage(key) {
-    return window.localStorage ? JSON.parse(window.localStorage.getItem(key)) || {} : {};
-}
-
-function setInLocalStorage(key, value) {
-    if (window.localStorage) {
-        window.localStorage.setItem(key, JSON.stringify(value));
-    }
+function initialState(board) {
+    return {
+        board: board,
+        tiles: emptyTiles(board),
+        gameState: newGameState(GameConstants.gameStates.SETUP),
+        timer: newTimer()
+    };
 }
 
 Dispatcher.register(function (action) {
@@ -41214,11 +41201,23 @@ Dispatcher.register(function (action) {
             GameStore.emitChange();
             break;
         case GameConstants.actions.GAME_RESTART:
-            restartGame(action.board);
+            state = _.assign({}, state, initialState(action.board));
             GameStore.emitChange();
             break;
     }
 });
 
 module.exports = GameStore;
-},{"../constants/GameConstants":171,"../constants/Records":172,"../dispatcher/Dispatcher":173,"events":2,"immutable":7,"lodash":9}]},{},[1]);
+},{"../constants/GameConstants":171,"../constants/Records":172,"../dispatcher/Dispatcher":173,"../utils/Utils":175,"events":2,"immutable":7,"lodash":9}],175:[function(require,module,exports){
+module.exports = {
+    getFromLocalStorage: function (key) {
+        return window.localStorage ? JSON.parse(window.localStorage.getItem(key)) || {} : {};
+    },
+    setInLocalStorage: function (key, value) {
+        if (window.localStorage) {
+            window.localStorage.setItem(key, JSON.stringify(value));
+        }
+    }
+};
+
+},{}]},{},[1]);

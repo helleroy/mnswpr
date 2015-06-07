@@ -39,11 +39,11 @@ module.exports = React.createClass({
             </a>;
         }.bind(this));
 
-        var bestTime = this.state.bestTimes[this.state.board.difficulty] ?
+        var bestTime = this.state.bestTimes.get(this.state.board.difficulty) ?
             <p className="bestTime">
                 <span>Your best time on this difficulty: </span>
                 <span className="time bold">
-                    {moment(this.state.bestTimes[this.state.board.difficulty]).format('mm:ss')}
+                    {moment(this.state.bestTimes.get(this.state.board.difficulty)).format('mm:ss')}
                 </span>
             </p> : null;
 
