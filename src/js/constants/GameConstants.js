@@ -12,8 +12,8 @@ module.exports = {
         FAILURE: null
     }),
     boards: {
-        EASY: {cols: 8, rows: 8, mines: 10},
-        INTERMEDIATE: {cols: 16, rows: 16, mines: 40},
-        HARD: {cols: 32, rows: 16, mines: 99}
+        EASY: {difficulty: 'EASY', cols: 8, rows: 8, mines: 10},
+        INTERMEDIATE: {difficulty: 'INTERMEDIATE', cols: 16, rows: 16, mines: 40},
+        HARD: {difficulty: 'HARD', cols: 32, rows: 16, mines: 99}
     }
 };

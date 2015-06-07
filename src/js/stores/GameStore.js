@@ -5,16 +5,36 @@ var Immutable = require('immutable');
 var Dispatcher = require('../dispatcher/Dispatcher');
 var GameConstants = require('../constants/GameConstants');
 var Tile = require('../constants/Records').Tile;
+var Timer = require('../constants/Records').Timer;
 
 var CHANGE_EVENT = 'changed';
+var BEST_TIMES_KEY = 'bestTimes';
 
 var initialBoard = GameConstants.boards.INTERMEDIATE;
+var timerInterval = null;
 
 var state = {
     tiles: generateTiles(initialBoard),
     board: initialBoard,
-    gameState: GameConstants.gameStates.PLAYING
+    gameState: newGameState(GameConstants.gameStates.PLAYING),
+    timer: newTimer(),
+    bestTimes: getFromLocalStorage(BEST_TIMES_KEY)
 };
+
+var GameStore = _.assign({}, EventEmitter.prototype, {
+    getState: function () {
+        return state;
+    },
+    emitChange: function () {
+        this.emit(CHANGE_EVENT);
+    },
+    addChangeListener: function (callback) {
+        this.on(CHANGE_EVENT, callback);
+    },
+    removeChangeListener: function (callback) {
+        this.removeListener(CHANGE_EVENT, callback);
+    }
+});
 
 function generateTiles(board) {
     var mines = generateMineIndicies(board);
@@ -44,7 +64,7 @@ function generateMineIndicies(board) {
 
 function revealTiles(revealing, tiles, board) {
     if (revealing.hasMine) {
-        state.gameState = GameConstants.gameStates.FAILURE;
+        state.gameState = newGameState(GameConstants.gameStates.FAILURE);
         return tiles.map(function (tile) {
             return tile.hasMine ? tile.merge({revealed: true}) : tile;
         });
@@ -69,7 +89,7 @@ function toggleFlag(id, tiles) {
 
 function checkCompleteness(tiles, board) {
     if (countRevealedTiles(tiles) === numberOfTiles(board) - board.mines) {
-        state.gameState = GameConstants.gameStates.VICTORY;
+        state.gameState = newGameState(GameConstants.gameStates.VICTORY);
     }
     return tiles;
 }
@@ -111,26 +131,52 @@ function getAdjacentTiles(index, tiles, cols) {
         });
 }
 
+function newGameState(newGameState) {
+    switch (newGameState) {
+        case GameConstants.gameStates.VICTORY:
+            state.bestTimes = updateBestTime(state.board.difficulty, state.timer.current);
+            GameStore.emitChange();
+            break;
+    }
+    clearInterval(timerInterval);
+    return newGameState;
+}
+
 function restartGame(board) {
     state.board = board;
     state.tiles = generateTiles(board);
-    state.gameState = GameConstants.gameStates.PLAYING;
+    state.gameState = newGameState(GameConstants.gameStates.PLAYING);
+    state.timer = newTimer();
 }
 
-var GameStore = _.assign({}, EventEmitter.prototype, {
-    getState: function () {
-        return state;
-    },
-    emitChange: function () {
-        this.emit(CHANGE_EVENT);
-    },
-    addChangeListener: function (callback) {
-        this.on(CHANGE_EVENT, callback);
-    },
-    removeChangeListener: function (callback) {
-        this.removeListener(CHANGE_EVENT, callback);
+function newTimer() {
+    clearInterval(timerInterval);
+    timerInterval = setInterval(function () {
+        state.timer = state.timer.merge({current: Date.now() - state.timer.start});
+        GameStore.emitChange();
+    }, 1000);
+    return new Timer({start: Date.now()});
+}
+
+function updateBestTime(difficulty, time) {
+    state.bestTimes[difficulty] = state.bestTimes[difficulty] || Number.MAX_VALUE;
+    if (state.bestTimes[difficulty] > time) {
+        var newBestTime = _.assign({}, state.bestTimes, Immutable.Map({}).set(difficulty, time).toObject());
+        setInLocalStorage(BEST_TIMES_KEY, newBestTime);
+        return newBestTime;
     }
-});
+    return state.bestTimes;
+}
+
+function getFromLocalStorage(key) {
+    return window.localStorage ? JSON.parse(window.localStorage.getItem(key)) || {} : {};
+}
+
+function setInLocalStorage(key, value) {
+    if (window.localStorage) {
+        window.localStorage.setItem(key, JSON.stringify(value));
+    }
+}
 
 Dispatcher.register(function (action) {
     switch (action.actionType) {

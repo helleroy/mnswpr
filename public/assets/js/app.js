@@ -40858,37 +40858,26 @@ var Alert = require('../alert/Alert');
 
 module.exports = React.createClass({displayName: "exports",
     getInitialState: function () {
-        return _.assign({}, GameStore.getState(), {timer: Immutable.Map({start: Date.now(), current: 0})});
+        return GameStore.getState();
     },
     componentDidMount: function () {
         GameStore.addChangeListener(this._onChange);
-        this.createTimerInterval();
     },
     componentWillUnmount: function () {
         GameStore.removeChangeListener(this._onChange);
-        clearInterval(this.timerInterval);
-    },
-    componentWillUpdate: function (nextProps, nextState) {
-        if (nextState.gameState !== GameConstants.gameStates.PLAYING) {
-            clearInterval(this.timerInterval);
-        }
-    },
-    createTimerInterval: function () {
-        clearInterval(this.timerInterval);
-        this.timerInterval = setInterval(function () {
-            this.setState({timer: this.state.timer.merge({current: Date.now() - this.state.timer.get('start')})});
-        }.bind(this), 1000);
     },
     restart: function (board) {
         GameActions.restartGame(board);
-        this.setState({timer: Immutable.Map({start: Date.now(), current: 0})});
-        this.createTimerInterval();
     },
     render: function () {
         var alertContent = this.state.gameState === GameConstants.gameStates.FAILURE ?
-            React.createElement("div", null, React.createElement("p", null, "You failed!"), React.createElement("a", {onClick: this.restart.bind(this, this.state.board)}, "Retry")) :
+            React.createElement("div", null, 
+                React.createElement("p", null, "You failed!"), React.createElement("a", {onClick: this.restart.bind(this, this.state.board)}, "Retry")
+            ) :
             this.state.gameState === GameConstants.gameStates.VICTORY ?
-                React.createElement("div", null, React.createElement("p", null, "You won!"), React.createElement("a", {onClick: this.restart.bind(this, this.state.board)}, "Play again")) : null;
+                React.createElement("div", null, 
+                    React.createElement("p", null, "You won!"), React.createElement("a", {onClick: this.restart.bind(this, this.state.board)}, "Play again")
+                ) : null;
 
         var difficulty = _.map(GameConstants.boards, function (board, difficulty) {
             var className = this.state.board === board ? 'selected' : '';
@@ -40896,6 +40885,14 @@ module.exports = React.createClass({displayName: "exports",
                 difficulty.toLowerCase()
             );
         }.bind(this));
+
+        var bestTime = this.state.bestTimes[this.state.board.difficulty] ?
+            React.createElement("p", {className: "bestTime"}, 
+                React.createElement("span", null, "Your best time on this difficulty: "), 
+                React.createElement("span", {className: "time bold"}, 
+                    moment(this.state.bestTimes[this.state.board.difficulty]).format('mm:ss')
+                )
+            ) : null;
 
         return React.createElement("div", {className: "game"}, 
             React.createElement(Alert, {isOpen: this.state.gameState != GameConstants.gameStates.PLAYING}, alertContent), 
@@ -40907,7 +40904,8 @@ module.exports = React.createClass({displayName: "exports",
 
             React.createElement(Board, {board: this.state.board, tiles: this.state.tiles, gameState: this.state.gameState}), 
 
-            React.createElement("div", {className: "timer"}, moment(this.state.timer.get('current')).format('mm:ss')), 
+            React.createElement("div", {className: "timer time"}, moment(this.state.timer.current).format('mm:ss')), 
+            bestTime, 
             React.createElement("div", {className: "howto"}, 
                 React.createElement("h2", null, "How to play:"), 
 
@@ -40974,9 +40972,9 @@ module.exports = {
         FAILURE: null
     }),
     boards: {
-        EASY: {cols: 8, rows: 8, mines: 10},
-        INTERMEDIATE: {cols: 16, rows: 16, mines: 40},
-        HARD: {cols: 32, rows: 16, mines: 99}
+        EASY: {difficulty: 'EASY', cols: 8, rows: 8, mines: 10},
+        INTERMEDIATE: {difficulty: 'INTERMEDIATE', cols: 16, rows: 16, mines: 40},
+        HARD: {difficulty: 'HARD', cols: 32, rows: 16, mines: 99}
     }
 };
 },{"keymirror":8}],172:[function(require,module,exports){
@@ -40989,6 +40987,10 @@ module.exports = {
         flagged: false,
         hasMine: false,
         adjacentMineCount: 0
+    }),
+    Timer: Immutable.Record({
+        start: Date.now(),
+        current: 0
     })
 };
 
@@ -41004,16 +41006,36 @@ var Immutable = require('immutable');
 var Dispatcher = require('../dispatcher/Dispatcher');
 var GameConstants = require('../constants/GameConstants');
 var Tile = require('../constants/Records').Tile;
+var Timer = require('../constants/Records').Timer;
 
 var CHANGE_EVENT = 'changed';
+var BEST_TIMES_KEY = 'bestTimes';
 
 var initialBoard = GameConstants.boards.INTERMEDIATE;
+var timerInterval = null;
 
 var state = {
     tiles: generateTiles(initialBoard),
     board: initialBoard,
-    gameState: GameConstants.gameStates.PLAYING
+    gameState: newGameState(GameConstants.gameStates.PLAYING),
+    timer: newTimer(),
+    bestTimes: getFromLocalStorage(BEST_TIMES_KEY)
 };
+
+var GameStore = _.assign({}, EventEmitter.prototype, {
+    getState: function () {
+        return state;
+    },
+    emitChange: function () {
+        this.emit(CHANGE_EVENT);
+    },
+    addChangeListener: function (callback) {
+        this.on(CHANGE_EVENT, callback);
+    },
+    removeChangeListener: function (callback) {
+        this.removeListener(CHANGE_EVENT, callback);
+    }
+});
 
 function generateTiles(board) {
     var mines = generateMineIndicies(board);
@@ -41043,7 +41065,7 @@ function generateMineIndicies(board) {
 
 function revealTiles(revealing, tiles, board) {
     if (revealing.hasMine) {
-        state.gameState = GameConstants.gameStates.FAILURE;
+        state.gameState = newGameState(GameConstants.gameStates.FAILURE);
         return tiles.map(function (tile) {
             return tile.hasMine ? tile.merge({revealed: true}) : tile;
         });
@@ -41068,7 +41090,7 @@ function toggleFlag(id, tiles) {
 
 function checkCompleteness(tiles, board) {
     if (countRevealedTiles(tiles) === numberOfTiles(board) - board.mines) {
-        state.gameState = GameConstants.gameStates.VICTORY;
+        state.gameState = newGameState(GameConstants.gameStates.VICTORY);
     }
     return tiles;
 }
@@ -41110,26 +41132,52 @@ function getAdjacentTiles(index, tiles, cols) {
         });
 }
 
+function newGameState(newGameState) {
+    switch (newGameState) {
+        case GameConstants.gameStates.VICTORY:
+            state.bestTimes = updateBestTime(state.board.difficulty, state.timer.current);
+            GameStore.emitChange();
+            break;
+    }
+    clearInterval(timerInterval);
+    return newGameState;
+}
+
 function restartGame(board) {
     state.board = board;
     state.tiles = generateTiles(board);
-    state.gameState = GameConstants.gameStates.PLAYING;
+    state.gameState = newGameState(GameConstants.gameStates.PLAYING);
+    state.timer = newTimer();
 }
 
-var GameStore = _.assign({}, EventEmitter.prototype, {
-    getState: function () {
-        return state;
-    },
-    emitChange: function () {
-        this.emit(CHANGE_EVENT);
-    },
-    addChangeListener: function (callback) {
-        this.on(CHANGE_EVENT, callback);
-    },
-    removeChangeListener: function (callback) {
-        this.removeListener(CHANGE_EVENT, callback);
+function newTimer() {
+    clearInterval(timerInterval);
+    timerInterval = setInterval(function () {
+        state.timer = state.timer.merge({current: Date.now() - state.timer.start});
+        GameStore.emitChange();
+    }, 1000);
+    return new Timer({start: Date.now()});
+}
+
+function updateBestTime(difficulty, time) {
+    state.bestTimes[difficulty] = state.bestTimes[difficulty] || Number.MAX_VALUE;
+    if (state.bestTimes[difficulty] > time) {
+        var newBestTime = _.assign({}, state.bestTimes, Immutable.Map({}).set(difficulty, time).toObject());
+        setInLocalStorage(BEST_TIMES_KEY, newBestTime);
+        return newBestTime;
     }
-});
+    return state.bestTimes;
+}
+
+function getFromLocalStorage(key) {
+    return window.localStorage ? JSON.parse(window.localStorage.getItem(key)) || {} : {};
+}
+
+function setInLocalStorage(key, value) {
+    if (window.localStorage) {
+        window.localStorage.setItem(key, JSON.stringify(value));
+    }
+}
 
 Dispatcher.register(function (action) {
     switch (action.actionType) {
