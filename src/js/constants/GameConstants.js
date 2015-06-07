@@ -7,6 +7,7 @@ module.exports = {
         TILE_FLAG: null
     }),
     gameStates: keyMirror({
+        SETUP: null,
         PLAYING: null,
         VICTORY: null,
         FAILURE: null

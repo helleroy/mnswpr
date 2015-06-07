@@ -14,9 +14,9 @@ var initialBoard = GameConstants.boards.INTERMEDIATE;
 var timerInterval = null;
 
 var state = {
-    tiles: generateTiles(initialBoard),
+    tiles: emptyTiles(initialBoard),
     board: initialBoard,
-    gameState: newGameState(GameConstants.gameStates.PLAYING),
+    gameState: newGameState(GameConstants.gameStates.SETUP),
     timer: newTimer(),
     bestTimes: getFromLocalStorage(BEST_TIMES_KEY)
 };
@@ -36,8 +36,14 @@ var GameStore = _.assign({}, EventEmitter.prototype, {
     }
 });
 
-function generateTiles(board) {
-    var mines = generateMineIndicies(board);
+function emptyTiles(board) {
+    return Immutable.List(_.fill(new Array(numberOfTiles(board)), {})).map(function (tile, index) {
+        return new Tile({index: index});
+    });
+}
+
+function generateTiles(board, safeIndicies) {
+    var mines = generateMineIndicies(board, safeIndicies);
 
     return Immutable.List(_.fill(new Array(numberOfTiles(board)), {})).map(function (tile, index) {
         return new Tile({hasMine: mines.includes(index)});
@@ -51,11 +57,11 @@ function generateTiles(board) {
     });
 }
 
-function generateMineIndicies(board) {
+function generateMineIndicies(board, safeIndicies) {
     var mines = Immutable.List([]);
     while (mines.size < board.mines) {
         var random = _.random(0, numberOfTiles(board) - 1);
-        if (!mines.includes(random)) {
+        if (!mines.includes(random) && !safeIndicies.includes(random)) {
             mines = mines.push(random);
         }
     }
@@ -134,18 +140,21 @@ function getAdjacentTiles(index, tiles, cols) {
 function newGameState(newGameState) {
     switch (newGameState) {
         case GameConstants.gameStates.VICTORY:
+            clearInterval(timerInterval);
             state.bestTimes = updateBestTime(state.board.difficulty, state.timer.current);
             GameStore.emitChange();
             break;
+        case GameConstants.gameStates.FAILURE:
+            clearInterval(timerInterval);
+            break;
     }
-    clearInterval(timerInterval);
     return newGameState;
 }
 
 function restartGame(board) {
     state.board = board;
-    state.tiles = generateTiles(board);
-    state.gameState = newGameState(GameConstants.gameStates.PLAYING);
+    state.tiles = emptyTiles(board);
+    state.gameState = newGameState(GameConstants.gameStates.SETUP);
     state.timer = newTimer();
 }
 
@@ -181,6 +190,14 @@ function setInLocalStorage(key, value) {
 Dispatcher.register(function (action) {
     switch (action.actionType) {
         case GameConstants.actions.TILE_REVEAL:
+            if (state.gameState === GameConstants.gameStates.SETUP) {
+                var safeIndicies = getAdjacentTiles(action.id, state.tiles, state.board.cols).push(state.tiles.get(action.id))
+                    .map(function (tile) {
+                        return tile.index;
+                    });
+                state.tiles = generateTiles(state.board, safeIndicies);
+                state.gameState = newGameState(GameConstants.gameStates.PLAYING);
+            }
             state.tiles = revealTiles(state.tiles.get(action.id), state.tiles, state.board);
             GameStore.emitChange();
             break;

@@ -48,7 +48,11 @@ module.exports = React.createClass({
             </p> : null;
 
         return <div className="game">
-            <Alert isOpen={this.state.gameState != GameConstants.gameStates.PLAYING}>{alertContent}</Alert>
+            <Alert isOpen={
+                this.state.gameState === GameConstants.gameStates.VICTORY ||
+                this.state.gameState === GameConstants.gameStates.FAILURE}>
+                {alertContent}
+            </Alert>
 
             <div className="difficultyPicker">
                 <p>Choose difficulty:</p>
