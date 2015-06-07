@@ -11,43 +11,48 @@ var Alert = require('../alert/Alert');
 
 module.exports = React.createClass({
     getInitialState: function () {
-        return _.assign({}, GameStore.getState(), {timer: Immutable.Map({start: Date.now(), current: 0})});
+        return GameStore.getState();
     },
     componentDidMount: function () {
         GameStore.addChangeListener(this._onChange);
-        this.createTimerInterval();
     },
     componentWillUnmount: function () {
         GameStore.removeChangeListener(this._onChange);
-        clearInterval(this.timerInterval);
-    },
-    componentWillUpdate: function (nextProps, nextState) {
-        if (nextState.gameState !== GameConstants.gameStates.PLAYING) {
-            clearInterval(this.timerInterval);
-        }
-    },
-    createTimerInterval: function () {
-        clearInterval(this.timerInterval);
-        this.timerInterval = setInterval(function () {
-            this.setState({timer: this.state.timer.merge({current: Date.now() - this.state.timer.get('start')})});
-        }.bind(this), 1000);
     },
     restart: function (board) {
         GameActions.restartGame(board);
-        this.setState({timer: Immutable.Map({start: Date.now(), current: 0})});
-        this.createTimerInterval();
     },
     render: function () {
         var alertContent = this.state.gameState === GameConstants.gameStates.FAILURE ?
-            <div><p>You failed!</p><a onClick={this.restart.bind(this, this.state.board)}>Retry</a></div> :
+            <div>
+                <p>You failed!</p><a onClick={this.restart.bind(this, this.state.board)}>Retry</a>
+            </div> :
             this.state.gameState === GameConstants.gameStates.VICTORY ?
-                <div><p>You won!</p><a onClick={this.restart.bind(this, this.state.board)}>Play again</a></div> : null;
+                <div>
+                    <p>You won!</p><a onClick={this.restart.bind(this, this.state.board)}>Play again</a>
+                </div> : null;
+
         var difficulty = _.map(GameConstants.boards, function (board, difficulty) {
-            return <a role="button" key={difficulty}
-                      onClick={this.restart.bind(this, board)}>{difficulty.toLowerCase()}</a>;
+            var className = this.state.board === board ? 'selected' : '';
+            return <a role="button" key={difficulty} className={className} onClick={this.restart.bind(this, board)}>
+                {difficulty.toLowerCase()}
+            </a>;
         }.bind(this));
+
+        var bestTime = this.state.bestTimes.get(this.state.board.difficulty) ?
+            <p className="bestTime">
+                <span>Your best time on this difficulty: </span>
+                <span className="time bold">
+                    {moment(this.state.bestTimes.get(this.state.board.difficulty)).format('mm:ss')}
+                </span>
+            </p> : null;
+
         return <div className="game">
-            <Alert isOpen={this.state.gameState != GameConstants.gameStates.PLAYING}>{alertContent}</Alert>
+            <Alert isOpen={
+                this.state.gameState === GameConstants.gameStates.VICTORY ||
+                this.state.gameState === GameConstants.gameStates.FAILURE}>
+                {alertContent}
+            </Alert>
 
             <div className="difficultyPicker">
                 <p>Choose difficulty:</p>
@@ -56,7 +61,8 @@ module.exports = React.createClass({
 
             <Board board={this.state.board} tiles={this.state.tiles} gameState={this.state.gameState}/>
 
-            <div className="timer">{moment(this.state.timer.get('current')).format('mm:ss')}</div>
+            <div className="timer time">{moment(this.state.timer.current).format('mm:ss')}</div>
+            {bestTime}
             <div className="howto">
                 <h2>How to play:</h2>
 

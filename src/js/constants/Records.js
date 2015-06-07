@@ -7,5 +7,9 @@ module.exports = {
         flagged: false,
         hasMine: false,
         adjacentMineCount: 0
+    }),
+    Timer: Immutable.Record({
+        start: Date.now(),
+        current: 0
     })
 };

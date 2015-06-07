@@ -8,7 +8,9 @@ module.exports = React.createClass({
         return this.props.tile !== nextProps.tile;
     },
     onClick: function (event) {
-        if (this.props.tile.revealed || this.props.gameState !== GameConstants.gameStates.PLAYING) {
+        if (this.props.tile.revealed ||
+            this.props.gameState === GameConstants.gameStates.VICTORY ||
+            this.props.gameState === GameConstants.gameStates.FAILURE) {
             return;
         }
         if (event.altKey) {
