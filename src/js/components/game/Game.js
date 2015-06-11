@@ -23,15 +23,6 @@ module.exports = React.createClass({
         GameActions.restartGame(board);
     },
     render: function () {
-        var alertContent = this.state.gameState === GameConstants.gameStates.FAILURE ?
-            <div>
-                <p>You failed!</p><a onClick={this.restart.bind(this, this.state.board)}>Retry</a>
-            </div> :
-            this.state.gameState === GameConstants.gameStates.VICTORY ?
-                <div>
-                    <p>You won!</p><a onClick={this.restart.bind(this, this.state.board)}>Play again</a>
-                </div> : null;
-
         var difficulty = _.map(GameConstants.boards, function (board, difficulty) {
             var className = this.state.board === board ? 'selected' : '';
             return <a role="button" key={difficulty} className={className} onClick={this.restart.bind(this, board)}>
@@ -48,11 +39,7 @@ module.exports = React.createClass({
             </p> : null;
 
         return <div className="game">
-            <Alert isOpen={
-                this.state.gameState === GameConstants.gameStates.VICTORY ||
-                this.state.gameState === GameConstants.gameStates.FAILURE}>
-                {alertContent}
-            </Alert>
+            <Alert board={this.state.board} gameState={this.state.gameState}/>
 
             <div className="difficultyPicker">
                 <p>Choose difficulty:</p>
